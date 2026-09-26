@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Your Bakery Name · Weekend bakes, made to order</title>
+  <meta name="description" content="Small-batch cookies, cupcakes and cake toast, baked fresh in our home kitchen. Pre-order by Thursday for weekend delivery.">
+  <meta name="theme-color" content="#3b2019">
+  <!-- Social sharing: og:image / og:url must be full https:// URLs of where the site is hosted -->
+  <link rel="canonical" href="https://manaskhanger.github.io/home-bakery/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Your Bakery Name">
+  <meta property="og:title" content="Your Bakery Name · Weekend bakes, made to order">
+  <meta property="og:description" content="Small-batch cookies, cupcakes and cake toast, baked fresh in our home kitchen. Pre-order by Thursday for weekend delivery.">
+  <meta property="og:url" content="https://manaskhanger.github.io/home-bakery/">
+  <meta property="og:image" content="https://manaskhanger.github.io/home-bakery/images/og-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_IN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://manaskhanger.github.io/home-bakery/images/og-image.jpg">
+  <link rel="preload" as="image" href="images/hero.jpg">
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="images/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="home">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a href="index.html" class="brand"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></a>
+      <nav class="nav" aria-label="Main">
+        <a href="#menu">Menu</a>
+        <a href="#how">How it works</a>
+        <a href="status.html">Track order</a>
+      </nav>
+      <button class="cart-btn" type="button" data-open-cart aria-label="Open cart">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M5 8h14l-1.2 11.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8Zm3 0V7a4 4 0 0 1 8 0v1"/></svg>
+        <span class="cart-btn-label">Cart</span>
+        <span class="cart-count" data-cart-count hidden>0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="sprinkles" aria-hidden="true"></div>
+      <div class="wrap hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow" data-cfg="eyebrow">Weekend bakes · Made to order</p>
+          <h1 class="hero-title" data-cfg="bakeryName">Your Bakery Name</h1>
+          <p class="hero-tagline" data-cfg="tagline">Small batches, baked fresh in our home kitchen</p>
+          <p class="hero-note">Cookies, cupcakes &amp; crisp cake toast — pre-order by Thursday and we'll bring them to your door, fresh on Saturday or Sunday.</p>
+          <div class="hero-actions">
+            <a href="#menu" class="btn btn-cream">Browse the menu</a>
+            <a href="status.html" class="btn btn-ghost-light">Track an order</a>
+          </div>
+        </div>
+        <figure class="hero-photo">
+          <img src="images/hero.jpg" data-cfg-src="heroImage" alt="A stack of freshly baked cookies drizzled with chocolate" width="900" height="1125" fetchpriority="high">
+          <figcaption class="hero-badge"><small>Next bake</small><b data-next-bake>This weekend</b><span data-next-cutoff>Order by Thursday</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="wrap perks" aria-label="How ordering works">
+      <div class="perk"><span>🗓️</span><div><b>Pre-order by Thursday</b><small>for the coming weekend</small></div></div>
+      <div class="perk"><span>🧺</span><div><b>Fresh Sat &amp; Sun</b><small>baked that morning</small></div></div>
+      <div class="perk"><span>🛵</span><div><b>Free home delivery</b><small>minimum order <span data-cfg-money="minOrder">₹250</span></small></div></div>
+      <div class="perk"><span>☕</span><div><b>Weekday evenings</b><small>cake toast only</small></div></div>
+    </section>
+
+    <section id="menu" class="wrap menu" aria-label="Menu">
+      <div class="section-head">
+        <p class="kicker">The menu</p>
+        <h2>Little treats, big love</h2>
+        <p class="muted">Tap <b>Add</b> to build your order. Everything is baked to order in small batches.</p>
+      </div>
+      <div id="menu-root"><p class="menu-loading muted center">Loading the menu…</p></div>
+      <noscript><p class="form-error center">Please enable JavaScript to place an order, or message us on WhatsApp.</p></noscript>
+    </section>
+
+    <section id="how" class="wrap how">
+      <div class="section-head">
+        <p class="kicker">How it works</p>
+        <h2>Three easy steps</h2>
+      </div>
+      <ol class="steps">
+        <li><span class="step-n">1</span><h3>Pick your treats</h3><p>Add cookies, cupcakes, cake toast or a box to your cart.</p></li>
+        <li><span class="step-n">2</span><h3>Choose a day</h3><p>Order by Thursday for Saturday or Sunday. Cake toast can come on weekday evenings too.</p></li>
+        <li><span class="step-n">3</span><h3>We confirm</h3><p>You'll get a confirmation on email &amp; WhatsApp. Track it anytime with your Order ID.</p></li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-card">
+        <div class="footer-grid">
+          <div class="f-brand">
+            <p class="f-name"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></p>
+            <p class="f-tag" data-cfg="tagline">Small batches, baked fresh in our home kitchen</p>
+            <a class="btn btn-cream btn-small" data-wa-link href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
+          </div>
+          <div>
+            <h4>Ordering</h4>
+            <ul class="f-list">
+              <li>Pre-order by Thursday</li>
+              <li>Delivered fresh Sat &amp; Sun</li>
+              <li>Free home delivery</li>
+              <li>Minimum order <span data-cfg-money="minOrder">₹250</span></li>
+              <li>Weekday evening delivery: cake toast only</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Say hello</h4>
+            <ul class="f-list">
+              <li><a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp <span data-cfg="whatsappDisplay">+91 [YOUR NUMBER]</span></a></li>
+              <li><a data-ig-link href="#" target="_blank" rel="noopener">Instagram @<span data-cfg="instagramHandle">yourhandle</span></a></li>
+              <li><a href="status.html">Track your order</a></li>
+              <li><a href="index.html#menu">See the menu</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="copyright">© <span data-year></span> <span data-cfg="bakeryName">Your Bakery Name</span> · Made with love at home · <a href="credits.html">Photo credits</a></p>
+    </div>
+  </footer>
+
+  <!-- Mobile floating cart bar -->
+  <button class="cart-bar" type="button" data-open-cart hidden>
+    <span><b data-cart-items>0 items</b> · <span data-cart-total>₹0</span></span>
+    <span>View cart →</span>
+  </button>
+
+  <!-- Cart drawer -->
+  <div class="drawer-overlay" data-close-cart hidden></div>
+  <aside class="drawer" id="drawer" aria-hidden="true" aria-label="Your order" role="dialog">
+    <div class="drawer-head">
+      <button class="icon-btn back-btn" type="button" data-back hidden aria-label="Back to cart">←</button>
+      <h2 class="drawer-title" data-drawer-title>Your cart</h2>
+      <button class="icon-btn" type="button" data-close-cart aria-label="Close">✕</button>
+    </div>
+
+    <!-- View: cart -->
+    <div class="drawer-view" data-view="cart">
+      <div class="drawer-body">
+        <div class="cart-empty" data-cart-empty>
+          <div class="empty-emoji">🧁</div>
+          <p><b>Your cart is empty</b></p>
+          <p class="muted">Add a few treats from the menu to get started.</p>
+          <button class="btn btn-choc" type="button" data-close-cart>Browse the menu</button>
+        </div>
+        <ul class="cart-lines" data-cart-lines></ul>
+        <button class="link-btn more-link" type="button" data-close-cart data-more-link>+ Add more treats</button>
+      </div>
+      <div class="drawer-foot" data-cart-foot>
+        <div class="min-meter" data-min-meter>
+          <div class="min-meter-text" data-min-text></div>
+          <div class="min-meter-bar"><span data-min-bar></span></div>
+        </div>
+        <div class="totals">
+          <div><span>Subtotal</span><span data-cart-total>₹0</span></div>
+          <div><span>Home delivery</span><span class="free">Free</span></div>
+        </div>
+        <button class="btn btn-rasp btn-block" type="button" data-to-checkout>Continue to details</button>
+      </div>
+    </div>
+
+    <!-- View: checkout -->
+    <div class="drawer-view" data-view="checkout" hidden>
+      <form class="drawer-body checkout" id="checkout-form" novalidate>
+        <div class="order-mini" data-order-mini></div>
+        <div class="form-error" data-form-error role="alert" hidden></div>
+
+        <fieldset>
+          <legend>Your details</legend>
+          <label class="field"><span>Full name</span>
+            <input name="name" autocomplete="name" required maxlength="80" placeholder="e.g. Priya Sharma">
+            <small class="err" data-err="name"></small></label>
+          <label class="field"><span>Mobile number <em>(WhatsApp)</em></span>
+            <div class="input-prefix"><b>+91</b><input name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" required maxlength="16" placeholder="98765 43210"></div>
+            <small class="err" data-err="phone"></small></label>
+          <label class="field"><span>Email</span>
+            <input name="email" type="email" autocomplete="email" required maxlength="120" placeholder="you@example.com">
+            <small class="err" data-err="email"></small></label>
+          <label class="field"><span>Delivery address</span>
+            <textarea name="address" rows="3" autocomplete="street-address" required maxlength="400" placeholder="House / flat, street, area, landmark, pincode"></textarea>
+            <small class="err" data-err="address"></small></label>
+        </fieldset>
+
+        <fieldset>
+          <legend>Delivery day</legend>
+          <p class="hint" data-date-hint></p>
+          <div class="chips" data-date-chips></div>
+          <small class="err" data-err="deliveryDate"></small>
+          <div class="slot-wrap" data-slot-wrap hidden>
+            <p class="hint">Time slot</p>
+            <div class="chips" data-slot-chips></div>
+            <small class="err" data-err="slot"></small>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Anything else?</legend>
+          <label class="field"><span>Notes <em>(optional)</em></span>
+            <textarea name="notes" rows="2" maxlength="500" placeholder="Allergies, a birthday message, gate code…"></textarea></label>
+          <label class="hp" aria-hidden="true">Website <input name="website" tabindex="-1" autocomplete="off"></label>
+        </fieldset>
+        <p class="pay-note">💛 Nothing to pay right now. We'll confirm your order first and share payment details on WhatsApp.</p>
+      </form>
+      <div class="drawer-foot">
+        <button class="btn btn-rasp btn-block" type="submit" form="checkout-form" data-submit>Place order</button>
+      </div>
+    </div>
+
+    <!-- View: success -->
+    <div class="drawer-view" data-view="success" hidden>
+      <div class="drawer-body success">
+        <div class="success-badge" aria-hidden="true">🎉</div>
+        <h3>Order received!</h3>
+        <p class="muted">Thank you<span data-success-name></span>! Your order is <b>awaiting confirmation</b>. We'll confirm it by email and WhatsApp soon.</p>
+        <div class="order-id-card">
+          <small>Your Order ID</small>
+          <div class="order-id" data-success-id>WB-XXXX</div>
+          <button class="link-btn" type="button" data-copy-id>Copy</button>
+        </div>
+        <div class="success-meta" data-success-meta></div>
+        <div class="success-actions">
+          <a class="btn btn-choc btn-block" data-track-link href="status.html">Track your order</a>
+          <a class="btn btn-outline btn-block" data-wa-order href="#" target="_blank" rel="noopener">Message us on WhatsApp</a>
+          <button class="link-btn" type="button" data-close-cart>Back to the menu</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="rules.js"></script>
+  <script src="demo-backend.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

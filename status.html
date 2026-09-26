@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#3b2019">
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="images/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <title>Track your order · Your Bakery Name</title>
+</head>
+<body data-page="status" class="page-soft">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a href="index.html" class="brand"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></a>
+      <nav class="nav nav-always" aria-label="Main">
+        <a href="index.html#menu">Menu</a>
+        <a href="status.html" aria-current="page">Track order</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap narrow page-main">
+    <div class="page-intro">
+      <p class="kicker">Order status</p>
+      <h1>Track your order</h1>
+      <p class="muted">Enter the Order ID from your confirmation (it looks like <b>WB-7K2Q</b>) and the mobile number you ordered with.</p>
+    </div>
+
+    <form class="card form-card status-form-grid" id="status-form" novalidate>
+      <label class="field"><span>Order ID</span>
+        <input name="orderId" required placeholder="WB-XXXX" autocapitalize="characters" maxlength="10" spellcheck="false"></label>
+      <label class="field"><span>Mobile number</span>
+        <div class="input-prefix"><b>+91</b><input name="phone" type="tel" inputmode="numeric" required maxlength="16" placeholder="98765 43210"></div></label>
+      <button class="btn btn-rasp btn-block" type="submit">Check status</button>
+      <div class="form-error" data-form-error role="alert" hidden></div>
+    </form>
+
+    <div id="status-result" aria-live="polite"></div>
+
+    <p class="center muted small help-line">Need help? <a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp us</a> · <a href="index.html">Back to the menu</a></p>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div class="footer-card">
+        <div class="footer-grid">
+          <div class="f-brand">
+            <p class="f-name"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></p>
+            <p class="f-tag" data-cfg="tagline">Small batches, baked fresh in our home kitchen</p>
+            <a class="btn btn-cream btn-small" data-wa-link href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
+          </div>
+          <div>
+            <h4>Ordering</h4>
+            <ul class="f-list">
+              <li>Pre-order by Thursday</li>
+              <li>Delivered fresh Sat &amp; Sun</li>
+              <li>Free home delivery</li>
+              <li>Minimum order <span data-cfg-money="minOrder">₹250</span></li>
+              <li>Weekday evening delivery: cake toast only</li>
+            </ul>
+          </div>
+          <div>
+            <h4>Say hello</h4>
+            <ul class="f-list">
+              <li><a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp <span data-cfg="whatsappDisplay">+91 [YOUR NUMBER]</span></a></li>
+              <li><a data-ig-link href="#" target="_blank" rel="noopener">Instagram @<span data-cfg="instagramHandle">yourhandle</span></a></li>
+              <li><a href="status.html">Track your order</a></li>
+              <li><a href="index.html#menu">See the menu</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="copyright">© <span data-year></span> <span data-cfg="bakeryName">Your Bakery Name</span> · Made with love at home · <a href="credits.html">Photo credits</a></p>
+    </div>
+  </footer>
+
+  <div class="toast" data-toast role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
+  <script src="rules.js"></script>
+  <script src="demo-backend.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

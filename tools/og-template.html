@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Karla:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;width:1200px;height:630px;background:#3b2019;color:#fbf3ea;font-family:Karla,sans-serif;position:relative;overflow:hidden}
+.c{position:absolute;left:80px;top:150px;width:640px}
+.e{font-size:18px;letter-spacing:.3em;text-transform:uppercase;color:#eed9c9;font-weight:700}
+h1{font-family:Fraunces,serif;font-weight:700;font-size:92px;line-height:1;margin:22px 0 18px;letter-spacing:-.02em}
+.t{font-family:Fraunces,serif;font-style:italic;font-size:32px;color:#f2cdbf}
+.r{margin-top:34px;font-size:20px;color:#d9c2b5}
+img{position:absolute;right:90px;top:60px;width:360px;height:510px;object-fit:cover;border-radius:999px 999px 30px 30px;box-shadow:0 0 0 10px rgba(251,243,234,.08)}
+i{position:absolute;width:22px;height:7px;border-radius:6px}
+.s{position:absolute;left:0;right:0;bottom:-18px;height:20px;background:radial-gradient(circle at 20px 20px,#fbf3ea 19.5px,transparent 20px) repeat-x;background-size:40px 20px}
+</style></head><body>
+<i style="left:60px;top:60px;background:#f4b6c2;transform:rotate(30deg)"></i><i style="left:300px;top:90px;background:#8fd3c1;transform:rotate(-40deg)"></i>
+<i style="left:640px;top:70px;background:#e89a4f;transform:rotate(60deg)"></i><i style="left:110px;top:585px;background:#d94f6d;transform:rotate(-20deg)"></i>
+<i style="left:560px;top:540px;background:#f3dcae;transform:rotate(15deg)"></i><i style="left:720px;top:420px;background:#f4b6c2;transform:rotate(-65deg)"></i>
+<div class="c"><div class="e">Weekend bakes · Made to order</div><h1 id="n">Your Bakery Name</h1><div class="t" id="t">Small batches, baked fresh in our home kitchen</div>
+<div class="r">Cookies · Cupcakes · Cake toast — pre-order by Thursday</div></div>
+<img src="../images/hero.jpg">
+<script src="../config.js"></script><script>document.getElementById('n').textContent=BAKERY_CONFIG.bakeryName;document.getElementById('t').textContent=BAKERY_CONFIG.tagline;</script>
+</body></html>
