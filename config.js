@@ -5,6 +5,7 @@
 window.BAKERY_CONFIG = {
   // ---- Brand ---------------------------------------------------------
   bakeryName: 'Your Bakery Name',
+  headline: 'A little luxury, every weekend.',
   tagline: 'Small batches, baked fresh in our home kitchen',
   eyebrow: 'Weekend bakes · Made to order',
 
@@ -21,6 +22,10 @@ window.BAKERY_CONFIG = {
   whatsappDisplay: '+91 [YOUR NUMBER]',
   // Instagram handle without the @
   instagramHandle: 'yourhandle',
+  // Where you bake from — shown next to the delivery-distance question
+  kitchenArea: '[YOUR AREA]',
+  // Food licence number shown in the footer
+  fssaiNumber: '[YOUR NUMBER]',
 
   // ---- Backend -------------------------------------------------------
   // 'demo'   -> no backend: orders are saved in the visitor's browser
@@ -37,11 +42,18 @@ window.BAKERY_CONFIG = {
   // ---- Ordering rules -------------------------------------------------
   // (Keep these in sync with apps-script/Code.gs if you change them.)
   currency: '₹',
-  minOrder: 250,            // minimum order value in ₹
+  minOrder: 250,            // minimum order value in ₹ (items only, before delivery)
   weekendsToShow: 2,        // how many upcoming weekends customers can pick
-  weekdayDaysAhead: 7,      // cake-toast-only orders: weekday window (days)
-  weekendSlots: ['Morning · 10am – 1pm', 'Afternoon · 1pm – 4pm', 'Evening · 4pm – 7pm'],
-  weekdaySlots: ['Evening · 6pm – 9pm'],
+  cutoffHour: 15,           // orders close THURSDAY at this hour, India time (15 = 3 pm)
+  weekendSlots: ['Morning · 10am – 1pm', 'Afternoon · 1pm – 4pm', 'Evening · 4pm – 7pm'],  // Sat & Sun, whole menu
+  fridaySlots: ['Evening · 6pm – 9pm'],                                                    // Friday: cake toast only
+
+  // ---- Delivery charges -------------------------------------------------
+  // Up to freeWithinKm: free on every order. Beyond that: free if the order
+  // is freeFromOrder or more, otherwise perKm for each km past freeWithinKm.
+  // Customers pick an approximate distance (up to maxKm, or "not sure" =
+  // you confirm the fee in the admin page before confirming the order).
+  delivery: { freeWithinKm: 3, freeFromOrder: 800, perKm: 10, maxKm: 15 },
 
   // ---- Menu ------------------------------------------------------------
   // id must be unique and must match MENU in apps-script/Code.gs.
@@ -64,8 +76,8 @@ window.BAKERY_CONFIG = {
       ]
     },
     {
-      id: 'caketoast', title: 'Cake Toast', icon: '🍞', note: 'Crisp, twice-baked · 200 g · Weekday delivery too', style: 'tiles',
-      weekdayOk: true,
+      id: 'caketoast', title: 'Cake Toast', icon: '🍞', note: 'Crisp, twice-baked · 200 g · Friday evening delivery too', style: 'tiles',
+      fridayOk: true,   // cake-toast-only orders can also be delivered on Friday evening
       items: [
         { id: 'ct-vanilla',  name: 'Classic Vanilla', cartName: 'Classic Vanilla Cake Toast', price: 130, desc: 'Buttery, golden, perfect with chai', image: 'images/caketoast-vanilla.jpg' },
         { id: 'ct-elaichi',  name: 'Elaichi',         cartName: 'Elaichi Cake Toast',         price: 140, desc: 'Fragrant green cardamom', image: 'images/caketoast-elaichi.jpg' },
@@ -76,10 +88,10 @@ window.BAKERY_CONFIG = {
     {
       id: 'boxes', title: 'Boxes & Combos', icon: '🎁', note: 'Save more · Perfect for gifting', style: 'boxes',
       items: [
-        { id: 'bx-cookie',  name: 'Cookie Box',  price: 449, desc: 'Any 6 cookies, mix flavours', box: true, hint: 'e.g. 2 Choco-Chip, 2 Nutella, 2 Sea Salt', image: 'images/box-cookie.jpg' },
-        { id: 'bx-cupcake', name: 'Cupcake Box', price: 469, desc: 'Any 4 cupcakes',              box: true, hint: 'e.g. 2 Red Velvet, 2 Salted Caramel', image: 'images/box-cupcake.jpg' },
-        { id: 'bx-party',   name: 'Party Box',   price: 669, desc: 'Any 6 cupcakes',              box: true, hint: 'e.g. 3 Belgian Chocolate, 3 Red Velvet', image: 'images/box-party.jpg' },
-        { id: 'bx-tasting', name: 'Tasting Box', price: 449, desc: '2 cookies, 2 cupcakes & 1 cake toast pack', box: true, badge: 'Try all', hint: 'e.g. Nutella + Sea Salt, Red Velvet + Caramel, Elaichi toast', image: 'images/box-tasting.jpg' }
+        { id: 'bx-tasting', name: 'Tasting Box', price: 449, box: true, featured: true, badge: 'Best value · Try all', contents: ['2 cookies', '2 cupcakes', '1 cake toast pack'], desc: '2 cookies, 2 cupcakes & 1 cake toast pack', hint: 'e.g. Nutella + Sea Salt cookies, Red Velvet + Caramel, Elaichi toast', image: 'images/box-tasting.jpg' },
+        { id: 'bx-cookie',  name: 'Cookie Box',  price: 449, box: true, badge: 'Mix flavours',    contents: ['Any 6 cookies'],   desc: 'Any 6 cookies', hint: 'e.g. 2 Choco-Chip, 2 Nutella, 2 Sea Salt', image: 'images/box-cookie.jpg' },
+        { id: 'bx-cupcake', name: 'Cupcake Box', price: 469, box: true, badge: 'For sharing',     contents: ['Any 4 cupcakes'],  desc: 'Any 4 cupcakes', hint: 'e.g. 2 Red Velvet, 2 Salted Caramel', image: 'images/box-cupcake.jpg' },
+        { id: 'bx-party',   name: 'Party Box',   price: 599, box: true, badge: 'For a gathering', contents: ['Any 6 cupcakes'],  desc: 'Any 6 cupcakes', hint: 'e.g. 3 Belgian Chocolate, 3 Red Velvet', image: 'images/box-party.jpg' }
       ]
     }
   ]

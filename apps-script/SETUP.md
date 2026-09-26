@@ -74,8 +74,17 @@ pre-flight, so it works with Apps Script out of the box. Don't change it to
 
 ## Day-to-day
 - Use `admin.html` on your phone, or edit the **Status** column directly in the Sheet.
+- **Delivery fees:** orders where the customer chose "not sure" show `TBC` in the
+  **Delivery Fee (₹)** column. In `admin.html` type the fee (0 for free) and press
+  **Confirm** – the total is recalculated and goes into the confirmation email. You can
+  also adjust any estimated fee and press **Save**. If you type a fee straight into
+  the Sheet, the installed trigger recalculates **Total (₹)** for you.
 - Changing prices/menu? Edit `config.js` **and** the `MENU`/`RULES` block in `Code.gs`
   (the server re-checks prices), then redeploy (step 5 note). `node server.js` warns you
   if the two files disagree.
+- **Upgrading from an earlier version of this script?** The Orders sheet gained
+  `Subtotal (₹)`, `Distance` and `Delivery Fee (₹)` columns. Rename the old tab (e.g.
+  *Orders (old)*) and run `setup()` again to create a fresh Orders tab with the new
+  columns, then redeploy (Deploy → Manage deployments → New version).
 - Gmail limits: consumer accounts can send ~100 emails/day via Apps Script – plenty for a
   home bakery.

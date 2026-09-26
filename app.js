@@ -43,6 +43,15 @@
   $$('[data-wa-link]').forEach(function (el) { el.href = waLink(CFG.whatsappNumber, 'Hi ' + CFG.bakeryName + '! 👋'); });
   $$('[data-ig-link]').forEach(function (el) { el.href = 'https://instagram.com/' + CFG.instagramHandle; });
   $$('[data-year]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
+  var DL = CFG.delivery;
+  $$('[data-dl]').forEach(function (el) { el.textContent = DL[el.dataset.dl]; });
+  $$('[data-dl-money]').forEach(function (el) { el.textContent = money(DL[el.dataset.dlMoney]); });
+  $$('[data-dl-example]').forEach(function (el) {
+    // Same example as the printed menu, computed from the real rules
+    var sub = 500, km = DL.freeWithinKm + 3, f = R.deliveryFee(sub, String(km), DL);
+    if (f.fee > 0) el.innerHTML = 'Example: A ' + money(sub) + ' order going ' + km + ' km pays <b>' + money(f.fee) + '</b> (' + (km - DL.freeWithinKm) + ' km × ' + money(DL.perKm) + '). Add ' + money(f.addForFree) + " more and it's <b>free</b>.";
+  });
+  var CUTOFF_TXT = 'Thursday, ' + R.formatHour(CFG.cutoffHour == null ? 15 : CFG.cutoffHour);
 
   // Hero sprinkles (deterministic, like the printed menu)
   $$('.sprinkles').forEach(function (box) {
@@ -66,11 +75,11 @@
   }
   $$('[data-cfg-src]').forEach(function (el) { var v = CFG[el.dataset.cfgSrc]; if (v) el.src = v; });
   (function nextBake() {
-    var d = R.availableDates({ weekendsToShow: 1 }).filter(function (x) { return x.kind === 'weekend'; });
+    var d = R.availableDates({ weekendsToShow: 1, cutoffHour: CFG.cutoffHour }).filter(function (x) { return x.kind === 'weekend'; });
     if (d.length < 2) return;
     var sat = R.formatDate(d[0].date).split(', ')[1], sun = R.formatDate(d[1].date).split(', ')[1];
     $$('[data-next-bake]').forEach(function (el) { el.textContent = 'Sat ' + sat + ' & Sun ' + sun; });
-    $$('[data-next-cutoff]').forEach(function (el) { el.textContent = 'Order by Thu, ' + R.formatDate(d[0].cutoff).split(', ')[1]; });
+    $$('[data-next-cutoff]').forEach(function (el) { el.textContent = 'Order by Thu ' + R.formatDate(d[0].cutoff).split(', ')[1] + ', ' + R.formatHour(CFG.cutoffHour == null ? 15 : CFG.cutoffHour); });
   })();
 
   var MENU_INDEX = R.indexMenu(CFG.menu);
@@ -88,6 +97,20 @@
     var cart = loadCart();
     var drawer = $('#drawer'), overlay = $('.drawer-overlay');
     var selected = { date: null, slot: null };
+    var DIST_KEY = 'bakery_distance_v1';
+    var distance = ''; try { distance = localStorage.getItem(DIST_KEY) || ''; } catch (e) {}
+    function feeInfo(sub) { return R.deliveryFee(sub, distance, DL); }
+    // "Free", "₹30", "To be confirmed", or a hint when no distance is chosen yet
+    function feeLabel(f, sub) {
+      if (!f.valid) return sub >= DL.freeFromOrder ? '<span class="free">Free</span>' : '<span class="muted">Free up to ' + DL.freeWithinKm + ' km</span>';
+      if (f.tbc) return '<span class="tbc">To be confirmed</span>';
+      return f.fee === 0 ? '<span class="free">Free</span>' : money(f.fee);
+    }
+    function nudge(f, sub) {
+      if (sub >= DL.freeFromOrder) return '';
+      if (f.valid && f.fee === 0) return '';
+      return 'Add <b>' + money(DL.freeFromOrder - sub) + '</b> more for free delivery' + (f.valid ? '' : ' at any distance');
+    }
 
     function loadCart() {
       try {
@@ -121,9 +144,10 @@
       var img = '<div class="p-img" data-icon="' + cat.icon + '">' +
         (it.image ? '<img src="' + esc(it.image) + '" alt="' + esc(it.name) + '" width="800" height="600" loading="lazy" decoding="async">' : '') + '</div>';
       var price = it.box ? '<span class="box-price">' + money(it.price) + '</span>' : '<span class="price">' + money(it.price) + '</span>';
-      return '<article class="product' + (it.box ? ' product-box' : '') + '" id="item-' + it.id + '">' + img +
+      var desc = it.contents ? '<ul class="p-contents">' + it.contents.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul>' : '<p>' + esc(it.desc) + '</p>';
+      return '<article class="product' + (it.box ? ' product-box' : '') + (it.featured ? ' featured' : '') + '" id="item-' + it.id + '">' + img +
         (it.badge ? '<span class="badge">' + esc(it.badge) + '</span>' : '') +
-        '<div class="p-body"><h4>' + esc(it.name) + '</h4><p>' + esc(it.desc) + '</p>' +
+        '<div class="p-body"><h4>' + esc(it.name) + '</h4>' + desc +
         '<div class="p-foot">' + price + '<div class="ctl" data-ctl="' + it.id + '">' + addControl(it.id) + '</div></div></div></article>';
     }
     function renderMenu() {
@@ -166,12 +190,18 @@
       wireImages(ul);
       if (active) { var f = $('[data-choices="' + active + '"]'); if (f) { f.focus(); f.setSelectionRange(f.value.length, f.value.length); } }
 
-      var min = CFG.minOrder, pct = Math.min(100, Math.round(p.total / min * 100));
-      $('[data-min-bar]').style.width = pct + '%';
-      $('[data-min-meter]').classList.toggle('met', p.total >= min);
-      $('[data-min-text]').innerHTML = p.total >= min
-        ? '✓ Minimum order reached — free home delivery'
-        : 'Add <b>' + money(min - p.total) + '</b> more to reach the ' + money(min) + ' minimum order';
+      var min = CFG.minOrder, f = feeInfo(p.total), meter = $('[data-min-meter]');
+      $$('[data-cart-delivery]').forEach(function (el) { el.innerHTML = feeLabel(f, p.total); });
+      // Stage 1: reach the minimum order. Stage 2: progress towards free delivery at any distance.
+      var stage2 = p.total >= min, target = stage2 ? DL.freeFromOrder : min;
+      $('[data-min-bar]').style.width = Math.min(100, Math.round(p.total / target * 100)) + '%';
+      meter.classList.toggle('met', stage2);
+      meter.classList.toggle('free', p.total >= DL.freeFromOrder);
+      var nd = nudge(f, p.total);
+      $('[data-min-text]').innerHTML = !stage2
+        ? 'Add <b>' + money(min - p.total) + '</b> more to reach the ' + money(min) + ' minimum order'
+        : p.total >= DL.freeFromOrder ? '✓ Free delivery at any distance 🎉'
+        : '✓ Minimum reached' + (nd ? ' · ' + nd : ' · free delivery for you');
       $('[data-to-checkout]').disabled = p.total < min;
     }
     function renderAll() { refreshControls(); renderCart(); if (currentView === 'checkout') renderCheckout(); }
@@ -204,27 +234,38 @@
     // ---- checkout
     function renderCheckout() {
       var p = priced();
-      $('[data-order-mini]').innerHTML =
-        '<div class="om-lines">' + p.lines.map(function (l) { return '<div><span>' + l.qty + ' × ' + esc(l.name) + '</span><span>' + money(l.lineTotal) + '</span></div>'; }).join('') + '</div>' +
-        '<div class="om-total"><span>Total <small>· free delivery</small></span><b>' + money(p.total) + '</b></div>';
-      var dates = R.availableDates({ weekendsToShow: CFG.weekendsToShow, weekdayDaysAhead: CFG.weekdayDaysAhead, cakeToastOnly: p.cakeToastOnly });
+      renderOrderMini(p);
+      var dates = R.availableDates({ weekendsToShow: CFG.weekendsToShow, cakeToastOnly: p.cakeToastOnly, cutoffHour: CFG.cutoffHour });
       if (!dates.some(function (d) { return d.date === selected.date; })) { selected.date = null; selected.slot = null; }
       $('[data-date-hint]').textContent = p.cakeToastOnly
-        ? 'Your cart is cake toast only, so weekday evening delivery is available too.'
-        : 'We deliver fresh on Saturdays & Sundays. Order by Thursday for the coming weekend.';
+        ? 'Your cart is cake toast only, so Friday evening delivery is available too.'
+        : 'We deliver fresh on Saturdays & Sundays (order by ' + CUTOFF_TXT + '). Friday evening delivery is for cake-toast-only orders.';
       $('[data-date-chips]').innerHTML = dates.map(function (d) {
         var parts = R.formatDate(d.date).split(', ');
-        return '<button type="button" class="chip date-chip' + (d.date === selected.date ? ' selected' : '') + (d.kind === 'weekday' ? ' weekday' : '') + '" data-date="' + d.date + '" data-kind="' + d.kind + '" aria-pressed="' + (d.date === selected.date) + '">' +
-          '<small>' + parts[0] + '</small><b>' + parts[1] + '</b></button>';
+        return '<button type="button" class="chip date-chip' + (d.date === selected.date ? ' selected' : '') + (d.kind === 'friday' ? ' friday' : '') + '" data-date="' + d.date + '" data-kind="' + d.kind + '" aria-pressed="' + (d.date === selected.date) + '">' +
+          '<small>' + parts[0] + (d.kind === 'friday' ? ' eve' : '') + '</small><b>' + parts[1] + '</b></button>';
       }).join('');
       renderSlots();
-      $('[data-submit]').textContent = 'Place order · ' + money(p.total);
+    }
+    // Order summary at the top of checkout: subtotal, delivery (estimate), total, nudge
+    function renderOrderMini(p) {
+      p = p || priced();
+      var f = feeInfo(p.total), nd = nudge(f, p.total), grand = p.total + (f.fee || 0);
+      var feeRow = f.valid
+        ? '<div><span>Delivery <small>· ' + esc(R.distanceLabel(distance, DL)) + (f.fee > 0 ? ' · estimate' : '') + '</small></span><span>' + feeLabel(f, p.total) + '</span></div>'
+        : '<div><span>Delivery</span><span class="muted">choose distance below</span></div>';
+      $('[data-order-mini]').innerHTML =
+        '<div class="om-lines">' + p.lines.map(function (l) { return '<div><span>' + l.qty + ' × ' + esc(l.name) + '</span><span>' + money(l.lineTotal) + '</span></div>'; }).join('') + '</div>' +
+        '<div class="om-sub"><div><span>Subtotal</span><span>' + money(p.total) + '</span></div>' + feeRow + '</div>' +
+        '<div class="om-total"><span>Total' + (f.tbc && f.valid ? ' <small>+ delivery (we confirm)</small>' : '') + '</span><b>' + money(grand) + '</b></div>' +
+        (nd && f.valid ? '<p class="om-nudge">💡 ' + nd + '</p>' : '');
+      $('[data-submit]').textContent = 'Place order · ' + money(grand) + (f.valid && f.tbc ? ' + delivery' : '');
     }
     function renderSlots() {
       var wrap = $('[data-slot-wrap]');
       if (!selected.date) { wrap.hidden = true; return; }
       var chip = $('[data-date="' + selected.date + '"]');
-      var slots = chip && chip.dataset.kind === 'weekday' ? CFG.weekdaySlots : CFG.weekendSlots;
+      var slots = R.slotsFor(chip && chip.dataset.kind, CFG);
       if (slots.indexOf(selected.slot) === -1) selected.slot = slots.length === 1 ? slots[0] : null;
       wrap.hidden = false;
       $('[data-slot-chips]').innerHTML = slots.map(function (s) {
@@ -237,11 +278,12 @@
     }
     function validate(form) {
       var ok = true, f = form.elements;
-      ['name', 'phone', 'email', 'address', 'deliveryDate', 'slot'].forEach(function (n) { setErr(n, ''); });
+      ['name', 'phone', 'email', 'address', 'distance', 'deliveryDate', 'slot'].forEach(function (n) { setErr(n, ''); });
       if (f.name.value.trim().length < 2) { setErr('name', 'Please enter your name.'); ok = false; }
       if (!R.normalizePhone(f.phone.value)) { setErr('phone', 'Enter a valid 10-digit Indian mobile number.'); ok = false; }
       if (!R.isValidEmail(f.email.value)) { setErr('email', 'Enter a valid email address.'); ok = false; }
       if (f.address.value.trim().length < 10) { setErr('address', 'Please enter your full address (with area & pincode).'); ok = false; }
+      if (!f.distance.value) { setErr('distance', 'Choose roughly how far you are — or "not sure".'); ok = false; }
       if (!selected.date) { setErr('deliveryDate', 'Pick a delivery day.'); ok = false; }
       else if (!selected.slot) { setErr('slot', 'Pick a time slot.'); ok = false; }
       return ok;
@@ -262,7 +304,7 @@
         action: 'createOrder',
         order: {
           name: f.name.value.trim(), phone: R.normalizePhone(f.phone.value), email: f.email.value.trim(),
-          address: f.address.value.trim(), deliveryDate: selected.date, slot: selected.slot,
+          address: f.address.value.trim(), deliveryDate: selected.date, slot: selected.slot, distance: f.distance.value,
           notes: f.notes.value.trim(), website: f.website.value,
           items: cart.map(function (l) { return { id: l.id, qty: l.qty, choices: l.choices || '' }; })
         }
@@ -275,10 +317,12 @@
         $('[data-success-name]').textContent = ', ' + payload.order.name.split(' ')[0];
         $('[data-success-meta]').innerHTML =
           '<div><span>Delivery</span><b>' + esc(R.formatDate(res.deliveryDate)) + ' · ' + esc(res.slot) + '</b></div>' +
-          '<div><span>Total</span><b>' + money(res.total) + ' <small>(free delivery)</small></b></div>';
+          '<div><span>Subtotal</span><b>' + money(res.subtotal) + '</b></div>' +
+          '<div><span>Delivery fee</span><b>' + esc(R.feeText(res)) + (res.deliveryFee > 0 ? ' <small>(estimate)</small>' : '') + '</b></div>' +
+          '<div class="sm-total"><span>Total</span><b>' + money(res.total) + (res.deliveryFeeTbc ? ' <small>+ delivery</small>' : '') + '</b></div>';
         $('[data-track-link]').href = 'status.html?id=' + encodeURIComponent(res.orderId);
         $('[data-wa-order]').href = waLink(CFG.whatsappNumber, 'Hi! I just placed order ' + res.orderId + ' for ' + R.formatDate(res.deliveryDate) + ' (' + money(res.total) + ').');
-        cart = []; saveCart(); form.reset(); selected = { date: null, slot: null };
+        cart = []; saveCart(); form.reset(); form.distance.value = distance; selected = { date: null, slot: null };
         showView('success'); renderAll();
       });
     }
@@ -315,6 +359,16 @@
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && drawer.classList.contains('open')) closeCart(); });
     $('#checkout-form').addEventListener('submit', submitOrder);
+    // Distance dropdown (remembered for next time)
+    var distSel = $('[data-distance]');
+    distSel.insertAdjacentHTML('beforeend', R.distanceOptions(DL).map(function (o) { return '<option value="' + o.value + '">' + esc(o.label) + '</option>'; }).join(''));
+    distSel.value = distance; if (distSel.value !== distance) distance = '';
+    $('[data-distance-hint]').textContent = 'Measured from our kitchen' + (CFG.kitchenArea ? ' in ' + CFG.kitchenArea : '') + '. Free up to ' + DL.freeWithinKm +
+      ' km, or on orders of ' + money(DL.freeFromOrder) + '+. Not sure? Pick the last option and we\'ll confirm the fee.';
+    distSel.addEventListener('change', function () {
+      distance = distSel.value; try { localStorage.setItem(DIST_KEY, distance); } catch (e) {}
+      setErr('distance', ''); renderCart(); renderOrderMini();
+    });
 
     renderMenu(); renderCart();
     // Deep link: index.html#cart opens the drawer
@@ -339,7 +393,9 @@
       (o.adminNote ? '<div class="baker-note"><b>Note from the baker</b><p>' + esc(o.adminNote) + '</p></div>' : '') +
       '<dl class="status-meta"><div><dt>Delivery</dt><dd>' + esc(R.formatDate(o.deliveryDate)) + ' · ' + esc(o.slot) + '</dd></div>' +
       '<div><dt>Items</dt><dd>' + (o.items || []).map(function (l) { return esc(l.qty + ' × ' + l.name) + (l.choices ? ' <small>(' + esc(l.choices) + ')</small>' : ''); }).join('<br>') + '</dd></div>' +
-      '<div><dt>Total</dt><dd><b>' + money(o.total) + '</b> <small>· free delivery</small></dd></div></dl>' +
+      '<div><dt>Subtotal</dt><dd>' + money(o.subtotal) + '</dd></div>' +
+      '<div><dt>Delivery</dt><dd>' + esc(R.feeText(o)) + (o.distanceLabel ? ' <small>· ' + esc(o.distanceLabel) + '</small>' : '') + '</dd></div>' +
+      '<div><dt>Total</dt><dd><b>' + money(o.total) + '</b>' + (o.deliveryFeeTbc ? ' <small>+ delivery (to be confirmed)</small>' : '') + '</dd></div></dl>' +
       '</article>';
   }
 
@@ -404,16 +460,17 @@
       var first = String(o.name).split(' ')[0];
       var when = R.formatDate(o.deliveryDate) + ' (' + o.slot + ')';
       var items = (o.items || []).map(function (l) { return '• ' + l.qty + ' × ' + l.name + (l.choices ? ' — ' + l.choices : ''); }).join('\n');
+      var money3 = 'Subtotal: ' + money(o.subtotal) + '\nDelivery (' + o.distanceLabel + '): ' + R.feeText(o) + '\nTotal: ' + money(o.total) + (o.deliveryFeeTbc ? ' + delivery' : '');
       if (o.status === 'Confirmed') {
         return 'Hi ' + first + '! 🎉 Your order ' + o.orderId + ' from ' + CFG.bakeryName + ' is confirmed.\n\n' + items +
-          '\n\nTotal: ' + money(o.total) + ' (free home delivery)\nDelivery: ' + when + '\nAddress: ' + o.address +
+          '\n\n' + money3 + '\nDelivery: ' + when + '\nAddress: ' + o.address +
           (o.adminNote ? '\n\nNote: ' + o.adminNote : '') + '\n\nThank you for supporting our little home bakery! 🧁';
       }
       if (o.status === 'Declined') {
         return 'Hi ' + first + ', thank you so much for your order ' + o.orderId + '. Unfortunately we can\'t take it this time 🙏' +
           (o.adminNote ? '\n\n' + o.adminNote : '') + '\n\nWe hope to bake for you soon! — ' + CFG.bakeryName;
       }
-      return 'Hi ' + first + '! We\'ve received your order ' + o.orderId + ' for ' + when + ' (' + money(o.total) + '). We\'ll confirm it shortly. — ' + CFG.bakeryName;
+      return 'Hi ' + first + '! We\'ve received your order ' + o.orderId + ' for ' + when + '.\n\n' + money3 + '\n\nWe\'ll confirm it shortly. — ' + CFG.bakeryName;
     }
 
     function render() {
@@ -441,7 +498,11 @@
           '<a href="tel:+91' + esc(phone) + '">+91 ' + esc(phone.slice(0, 5) + ' ' + phone.slice(5)) + '</a>' +
           '<a href="mailto:' + esc(o.email) + '">' + esc(o.email) + '</a><span class="muted">' + esc(o.address) + '</span></div>' +
           '<ul class="oc-items">' + (o.items || []).map(function (l) { return '<li><span>' + l.qty + ' × ' + esc(l.name) + (l.choices ? '<small>' + esc(l.choices) + '</small>' : '') + '</span><span>' + money(l.lineTotal) + '</span></li>'; }).join('') +
-          '<li class="oc-total"><span>Total</span><b>' + money(o.total) + '</b></li></ul></div>' +
+          '<li class="oc-sub"><span>Subtotal</span><span>' + money(o.subtotal) + '</span></li>' +
+          '<li class="oc-fee"><label for="fee-' + esc(o.orderId) + '">Delivery<small>' + esc(o.distanceLabel || '') + ' · ' + (o.deliveryFeeTbc ? '<em class="tbc">fee to confirm</em>' : o.status === 'Pending' ? 'estimate' : 'final') + '</small></label>' +
+          '<span class="fee-edit"><span class="fee-cur">₹</span><input id="fee-' + esc(o.orderId) + '" class="fee-input" data-fee type="number" inputmode="numeric" min="0" max="5000" step="10" value="' + (o.deliveryFeeTbc || o.deliveryFee == null ? '' : o.deliveryFee) + '" placeholder="TBC" data-orig="' + (o.deliveryFeeTbc || o.deliveryFee == null ? '' : o.deliveryFee) + '" aria-label="Delivery fee in rupees">' +
+          '<button type="button" class="fee-save" data-save-fee hidden>Save</button></span></li>' +
+          '<li class="oc-total"><span>Total</span><b data-oc-total data-subtotal="' + Number(o.subtotal) + '">' + money(o.total) + (o.deliveryFeeTbc ? ' <small class="tbc-inline">+ delivery</small>' : '') + '</b></li></ul></div>' +
           (o.notes ? '<p class="oc-notes">📝 ' + esc(o.notes) + '</p>' : '') +
           '<div class="oc-actions"><input class="oc-note" data-note placeholder="Note to customer (optional)" maxlength="500" value="' + esc(o.adminNote || '') + '">' +
           '<div class="oc-buttons">' +
@@ -450,6 +511,31 @@
           '<a class="btn btn-small btn-wa" target="_blank" rel="noopener" href="' + esc(waLink('91' + phone, waMessage(o))) + '">Send on WhatsApp</a>' +
           '</div></div></article>';
       }).join('');
+    }
+
+    // Delivery fee editing: live total preview + "Save" button
+    document.addEventListener('input', function (e) {
+      if (!e.target.matches || !e.target.matches('[data-fee]')) return;
+      var card = e.target.closest('[data-order]'), totalEl = card.querySelector('[data-oc-total]');
+      var v = R.parseFee(e.target.value), sub = Number(totalEl.dataset.subtotal);
+      totalEl.innerHTML = (v === undefined || isNaN(v)) ? money(sub) + ' <small class="tbc-inline">+ delivery</small>' : money(sub + v);
+      card.querySelector('[data-save-fee]').hidden = e.target.value === e.target.dataset.orig;
+      e.target.classList.toggle('invalid', v !== undefined && isNaN(v));
+    });
+    function sendUpdate(card, status, btn) {
+      var id = card.dataset.order, feeEl = card.querySelector('[data-fee]');
+      var payload = { action: 'updateStatus', password: pw, orderId: id, status: status, note: card.querySelector('[data-note]').value };
+      var feeVal = R.parseFee(feeEl.value);
+      if (feeVal !== undefined && isNaN(feeVal)) { toast('Delivery fee must be a whole number of rupees'); feeEl.focus(); return; }
+      if (status === 'Confirmed' && feeVal === undefined) { toast('Enter the delivery fee first (0 for free)'); feeEl.classList.add('invalid'); feeEl.focus(); return; }
+      if (feeVal !== undefined && feeEl.value !== feeEl.dataset.orig) payload.deliveryFee = feeVal;
+      $$('button', card).forEach(function (b) { b.disabled = true; });
+      return api(payload).then(function (res) {
+        if (!res.ok) { toast(res.error || 'Could not update'); render(); return res; }
+        orders = orders.map(function (o) { return o.orderId === id ? res.order : o; });
+        render();
+        return res;
+      });
     }
 
     $('#login-form').addEventListener('submit', function (e) {
@@ -472,15 +558,17 @@
       }
       else if (t.hasAttribute('data-refresh')) load().then(function () { toast('Orders refreshed'); });
       else if (t.dataset.filter !== undefined) { filter = t.dataset.filter; render(); }
+      else if (t.hasAttribute('data-save-fee')) {
+        var fcard = t.closest('[data-order]'), fo = orders.filter(function (o) { return o.orderId === fcard.dataset.order; })[0];
+        var pr = sendUpdate(fcard, fo.status, t);
+        if (pr) pr.then(function (res) { if (res && res.ok) toast('Delivery fee saved · total ' + money(res.order.total) + (fo.status === 'Confirmed' ? ' — send the update on WhatsApp' : '')); });
+      }
       else if (t.dataset.setStatus) {
         var card = t.closest('[data-order]'), id = card.dataset.order, status = t.dataset.setStatus;
-        var note = card.querySelector('[data-note]').value;
         if (status === 'Declined' && !confirm('Decline order ' + id + '? The customer will be emailed.')) return;
-        $$('button', card).forEach(function (b) { b.disabled = true; });
-        api({ action: 'updateStatus', password: pw, orderId: id, status: status, note: note }).then(function (res) {
-          if (!res.ok) { toast(res.error || 'Could not update'); render(); return; }
-          orders = orders.map(function (o) { return o.orderId === id ? res.order : o; });
-          render();
+        var pr2 = sendUpdate(card, status, t);
+        if (pr2) pr2.then(function (res) {
+          if (!res || !res.ok) return;
           if (res.simulatedEmail) toast('Demo: ' + (status === 'Confirmed' ? 'confirmation' : 'decline') + ' email would be sent to ' + res.simulatedEmail.to + ' — now send it on WhatsApp', 4200);
           else toast(id + ' ' + status.toLowerCase() + (res.emailSent ? ' · email sent' : '') + ' — now send it on WhatsApp');
           var nc = $('[data-order="' + id + '"] .btn-wa'); if (nc) nc.classList.add('pulse');

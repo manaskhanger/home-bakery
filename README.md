@@ -45,13 +45,17 @@ GitHub Pages or Netlify (free).
 ## Make it yours – checklist
 | What | Where |
 |---|---|
-| Bakery name, tagline, WhatsApp number, Instagram | `config.js` (top) |
+| Bakery name, headline & tagline, WhatsApp number, Instagram, your area, FSSAI number | `config.js` (top) |
 | Name in browser tab / link previews | `<title>` + `og:` tags in `index.html`, `status.html`, `credits.html`; `site.webmanifest` |
 | Menu items, prices, descriptions | `config.js` **and** `MENU` in `apps-script/Code.gs` (keep in sync; `node server.js` warns if they differ) |
-| Minimum order (₹250), cut-off (Thursday), delivery slots | `config.js` + `RULES` in `Code.gs` |
+| Minimum order (₹250), cut-off (Thursday 3 pm), delivery slots, delivery charges (3 km / ₹800 / ₹10 per km) | `config.js` + `RULES` in `Code.gs` (the homepage Delivery section, cart and checkout all update from these numbers) |
 | Photos | replace the files in `images/` keeping the same names (≈800×600, landscape 4:3, JPG). Hero: `images/hero.jpg` (portrait 4:5). The file-per-item mapping is the `image:` field of each item in `config.js`. |
 | Link-preview image | `images/og-image.jpg` (and the absolute `og:url` / `og:image` URLs in `index.html` if you host elsewhere) (1200×630) – or edit `tools/og-template.html` and re-screenshot it |
 | Favicon | `images/favicon.svg`, `favicon-32.png`, `apple-touch-icon.png` |
+
+After editing `styles.css` or any `.js` file on a live site, bump the `?v=2` at the end of
+the `<script>`/`<link>` tags in the four HTML files (e.g. to `?v=3`) so returning visitors
+get the new version instead of a cached one.
 
 The current photos are free-licence **stock placeholders** (Unsplash, Pexels, and a few
 CC BY photos from Flickr) – see `images/CREDITS.md` / `credits.html`. Please replace
@@ -59,14 +63,24 @@ them with photos of your own bakes before launch. If you keep any CC BY photo, k
 credits page linked in the footer.
 
 ## How ordering works
-- Weekend delivery (Sat & Sun), pre-order by **Thursday** of that week (India time).
-- Minimum order **₹250**, free home delivery.
-- **Cake toast-only** orders can also pick a weekday evening (next 7 days).
+- Delivery on **Saturday & Sunday** (whole menu); **Friday evening** only for
+  cake-toast-only orders. Orders for a weekend close **Thursday 3 pm** India time
+  (computed in IST whatever the visitor's own time zone is).
+- Minimum order **₹250** (items, before delivery).
+- **Delivery charges:** up to 3 km free on every order; beyond 3 km free on orders of
+  ₹800+; otherwise ₹10/km for the distance past 3 km (₹500 going 6 km → ₹30).
+  At checkout the customer picks an approximate distance (Within 3 km, 4 km … 15 km,
+  or "More than 15 km / not sure"). The cart shows subtotal, delivery fee (estimate)
+  and total, and nudges "Add ₹X more for free delivery".
+  "Not sure" = fee **to be confirmed**: the baker types the fee in the admin page
+  before confirming (confirming is blocked until a fee is entered). The baker can also
+  adjust any estimated fee; the total is recalculated and used in the confirmation
+  email and WhatsApp message.
 - Boxes ask the customer to choose flavours.
-- Prices are re-calculated on the server – the browser total is never trusted.
+- Prices and delivery fees are re-calculated on the server – the browser total is never trusted.
 - Status flow: **Pending → Confirmed / Declined** (+ optional note to the customer).
   Each status change sends one email; the admin page also opens WhatsApp with a
-  ready-made message.
+  ready-made message (items, subtotal, delivery, total).
 - No online payment – payment details are shared on WhatsApp after confirming.
 
 ## Files

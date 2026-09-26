@@ -12,9 +12,13 @@
 (function (root) {
   'use strict';
   var R = root.BakeryRules;
-  var ORDERS_KEY = 'bakery_demo_orders_v1';
-  var OUTBOX_KEY = 'bakery_demo_outbox_v1';
-  var STATUSES = ['Pending', 'Confirmed', 'Declined'];
+  // Bump DATA_VERSION whenever the order format / rules change: older demo
+  // data in a visitor's browser is then discarded and fresh samples seeded.
+  var DATA_VERSION = 2;
+  var ORDERS_KEY = 'bakery_demo_orders_v' + DATA_VERSION;
+  var OUTBOX_KEY = 'bakery_demo_outbox_v' + DATA_VERSION;
+  var STATUSES = R.STATUSES;
+  try { for (var v = 1; v < DATA_VERSION; v++) { localStorage.removeItem('bakery_demo_orders_v' + v); localStorage.removeItem('bakery_demo_outbox_v' + v); } } catch (e) {}
 
   function cfg() { return root.BAKERY_CONFIG; }
   function read(key) { try { return JSON.parse(localStorage.getItem(key)) || null; } catch (e) { return null; } }
@@ -34,26 +38,31 @@
   // ---- sample orders so the admin dashboard isn't empty on first visit
   function seed() {
     var c = cfg(), now = Date.now();
-    var dates = R.availableDates({ today: R.todayIST(), weekendsToShow: c.weekendsToShow, weekdayDaysAhead: c.weekdayDaysAhead, cakeToastOnly: true });
-    var weekend = dates.filter(function (d) { return d.kind !== 'weekday'; });
-    var weekday = dates.filter(function (d) { return d.kind === 'weekday'; });
-    var sat = (weekend[0] || dates[0]).date, sun = (weekend[1] || weekend[0] || dates[0]).date;
-    var wk = (weekday[0] || dates[0]).date;
-    function mk(id, minsAgo, name, phone, email, address, date, slot, items, status, note, notes) {
-      var p = R.priceItems(items, c.menu);
+    var dates = R.availableDates({ weekendsToShow: c.weekendsToShow, cakeToastOnly: true, cutoffHour: c.cutoffHour });
+    var fri = dates.filter(function (d) { return d.kind === 'friday'; })[0] || dates[0];
+    var wk = dates.filter(function (d) { return d.kind === 'weekend'; });
+    var sat = (wk[0] || dates[0]).date, sun = (wk[1] || wk[0] || dates[0]).date;
+    function mk(id, minsAgo, name, phone, email, address, date, kind, slot, distance, items, status, note, notes) {
+      var p = R.priceItems(items, c.menu), f = R.deliveryFee(p.total, distance, c.delivery);
       var created = new Date(now - minsAgo * 60000).toISOString();
       var updated = status === 'Pending' ? created : new Date(now - Math.max(minsAgo - 25, 1) * 60000).toISOString();
+      var lines = p.lines.map(function (l) { return { id: l.id, name: l.name, qty: l.qty, price: l.price, lineTotal: l.lineTotal, choices: l.choices }; });
       return { orderId: id, createdAt: created, name: name, phone: phone, email: email, address: address,
-        deliveryDate: date, slot: slot, items: p.lines, summary: R.summarize(p.lines), total: p.total, notes: notes || '',
+        deliveryDate: date, deliveryKind: kind, slot: slot, items: lines, summary: R.summarize(lines),
+        distance: distance, distanceLabel: R.distanceLabel(distance, c.delivery), subtotal: p.total,
+        deliveryFee: f.fee, deliveryFeeTbc: f.tbc, total: p.total + (f.fee || 0), notes: notes || '',
         status: status, adminNote: note || '', updatedAt: updated, lastEmailedStatus: status === 'Pending' ? '' : status, sample: true };
     }
     return [
+      // ₹689 going 6 km → ₹30 delivery (estimate)
       mk('WB-DEM1', 42, 'Asha Sample', '9000000001', 'asha.sample@example.com', '12 Example Lane, Sample Nagar, Pune 411001',
-        sat, c.weekendSlots[0], [{ id: 'bx-cookie', qty: 1, choices: '3 Choco-Chip, 3 Sea Salt' }, { id: 'cc-redvelvet', qty: 2 }], 'Pending', '', 'Birthday — please add a small candle 🎂'),
+        sat, 'weekend', c.weekendSlots[0], '6', [{ id: 'bx-cookie', qty: 1, choices: '3 Choco-Chip, 3 Sea Salt' }, { id: 'cc-redvelvet', qty: 2 }], 'Pending', '', 'Birthday — please add a small candle 🎂'),
+      // within 3 km → free
       mk('WB-DEM2', 180, 'Kabir Example', '9000000002', 'kabir.example@example.com', 'Flat 4B, Demo Heights, Test Road, Pune 411045',
-        sun, c.weekendSlots[1], [{ id: 'ck-nutella', qty: 2 }, { id: 'cc-caramel', qty: 2 }], 'Confirmed', 'See you Sunday! Delivery around 2pm.'),
+        sun, 'weekend', c.weekendSlots[1], String(c.delivery.freeWithinKm), [{ id: 'ck-nutella', qty: 2 }, { id: 'cc-caramel', qty: 2 }], 'Confirmed', 'See you Sunday! Delivery around 2pm.'),
+      // cake toast only → Friday evening; "not sure" distance → fee to be confirmed
       mk('WB-DEM3', 300, 'Zoya Demo', '9000000003', 'zoya.demo@example.com', '7 Placeholder Street, Mock Colony, Pune 411014',
-        wk, c.weekdaySlots[0], [{ id: 'ct-elaichi', qty: 2 }], 'Pending')
+        fri.date, 'friday', c.fridaySlots[0], 'unknown', [{ id: 'ct-elaichi', qty: 2 }], 'Pending')
     ];
   }
 
@@ -64,45 +73,23 @@
   }
 
   function record(kind, o) {
-    var subject = kind === 'received' ? "We've got your order " + o.orderId + ' 🧁'
-      : o.status === 'Confirmed' ? 'Your order ' + o.orderId + ' is confirmed! 🎉' : 'About your order ' + o.orderId;
-    var mail = { at: new Date().toISOString(), kind: kind, orderId: o.orderId, to: o.email, subject: subject, simulated: true };
+    var m = R.buildEmail(kind, o, cfg());
+    var mail = { at: new Date().toISOString(), kind: kind, orderId: o.orderId, to: m.to, subject: m.subject, body: m.body, simulated: true };
     var box = read(OUTBOX_KEY) || []; box.push(mail); write(OUTBOX_KEY, box.slice(-50));
-    if (root.console) console.info('[demo] email NOT sent (demo mode) → ' + mail.to + ': ' + subject);
+    if (root.console) console.info('[demo] email NOT sent (demo mode) → ' + mail.to + ': ' + mail.subject + '\n' + mail.body);
     return mail;
   }
 
-  function publicStatus(o) {
-    return { orderId: o.orderId, firstName: String(o.name).split(' ')[0], status: o.status, deliveryDate: o.deliveryDate, slot: o.slot,
-      summary: o.summary, items: o.items, total: o.total, adminNote: o.adminNote, createdAt: o.createdAt, updatedAt: o.updatedAt };
-  }
-
   function createOrder(p) {
-    var c = cfg(), o = p.order || {}, errors = [];
-    if (o.website) return { ok: false, error: 'Spam check failed.' };
-    var name = String(o.name || '').trim().slice(0, 80), phone = R.normalizePhone(o.phone);
-    var email = String(o.email || '').trim().slice(0, 120), address = String(o.address || '').trim().slice(0, 400);
-    var notes = String(o.notes || '').trim().slice(0, 500);
-    if (name.length < 2) errors.push('Please enter your name.');
-    if (!phone) errors.push('Please enter a valid 10-digit Indian mobile number.');
-    if (!R.isValidEmail(email)) errors.push('Please enter a valid email address.');
-    if (address.length < 10) errors.push('Please enter your full delivery address.');
-    var priced = R.priceItems(o.items, c.menu);
-    errors = errors.concat(priced.errors);
-    if (!priced.errors.length && priced.total < c.minOrder) errors.push('Minimum order is ₹' + c.minOrder + '. Your cart is ₹' + priced.total + '.');
-    var dates = R.availableDates({ today: R.todayIST(), weekendsToShow: c.weekendsToShow, weekdayDaysAhead: c.weekdayDaysAhead, cakeToastOnly: priced.cakeToastOnly });
-    var d = dates.filter(function (x) { return x.date === o.deliveryDate; })[0];
-    if (!d) errors.push(priced.cakeToastOnly ? 'Please pick an available delivery date.' : 'Please pick an available Saturday or Sunday (pre-order by Thursday; weekday delivery is for cake toast only).');
-    var slots = d && d.kind === 'weekday' ? c.weekdaySlots : c.weekendSlots;
-    if (d && slots.indexOf(o.slot) === -1) errors.push('Please pick a delivery slot.');
-    if (errors.length) return { ok: false, error: errors[0], errors: errors };
-    var list = orders(), now = new Date().toISOString();
-    var order = { orderId: newOrderId(list), createdAt: now, name: name, phone: phone, email: email, address: address,
-      deliveryDate: o.deliveryDate, slot: o.slot, items: priced.lines, summary: R.summarize(priced.lines), total: priced.total,
-      notes: notes, status: 'Pending', adminNote: '', updatedAt: now, lastEmailedStatus: '' };
+    var v = R.validateOrder(p.order, cfg());
+    if (!v.ok) return { ok: false, error: v.error, errors: v.errors };
+    var list = orders(), now = new Date().toISOString(), order = { orderId: newOrderId(list), createdAt: now };
+    Object.keys(v.fields).forEach(function (k) { order[k] = v.fields[k]; });
+    order.status = 'Pending'; order.adminNote = ''; order.updatedAt = now; order.lastEmailedStatus = '';
     list.push(order); write(ORDERS_KEY, list);
     record('received', order);
-    return { ok: true, orderId: order.orderId, total: order.total, status: order.status, deliveryDate: order.deliveryDate, slot: order.slot };
+    return { ok: true, orderId: order.orderId, subtotal: order.subtotal, deliveryFee: order.deliveryFee, deliveryFeeTbc: order.deliveryFeeTbc,
+      total: order.total, status: order.status, deliveryDate: order.deliveryDate, slot: order.slot };
   }
 
   function handle(p) {
@@ -114,8 +101,10 @@
       var id = String(p.orderId || '').trim().toUpperCase(), phone = R.normalizePhone(p.phone);
       var o = orders().filter(function (x) { return x.orderId === id; })[0];
       if (!o || !phone || o.phone !== phone) return { ok: false, error: "We couldn't find an order with that ID and phone number." };
-      return { ok: true, order: publicStatus(o) };
+      return { ok: true, order: R.publicStatus(o) };
     }
+    // Resetting only touches this visitor's own browser storage, so no password needed.
+    if (action === 'resetDemo') { localStorage.removeItem(ORDERS_KEY); localStorage.removeItem(OUTBOX_KEY); orders(); return { ok: true }; }
     if (String(p.password || '') !== String(c.demoAdminPassword || 'bakery123')) return { ok: false, error: 'Wrong password.', auth: false };
     if (action === 'login') return { ok: true };
     if (action === 'listOrders') {
@@ -124,20 +113,18 @@
       return { ok: true, orders: list };
     }
     if (action === 'updateStatus') {
-      if (STATUSES.indexOf(p.status) === -1) return { ok: false, error: 'Invalid status.' };
       var all = orders(), ord = all.filter(function (x) { return x.orderId === String(p.orderId || '').toUpperCase(); })[0];
       if (!ord) return { ok: false, error: 'Order not found.' };
-      ord.status = p.status;
-      if (typeof p.note === 'string') ord.adminNote = p.note.trim().slice(0, 500);
+      var res = R.applyAdminUpdate(ord, p);
+      if (!res.ok) return res;
       ord.updatedAt = new Date().toISOString();
       var mail = null;
       if (ord.status !== 'Pending' && ord.lastEmailedStatus !== ord.status && p.sendEmail !== false) {
         mail = record('status', ord); ord.lastEmailedStatus = ord.status;
       }
       write(ORDERS_KEY, all);
-      return { ok: true, order: ord, emailSent: false, simulatedEmail: mail ? { to: mail.to, subject: mail.subject } : null };
+      return { ok: true, order: ord, emailSent: false, feeChanged: res.feeChanged, simulatedEmail: mail ? { to: mail.to, subject: mail.subject } : null };
     }
-    if (action === 'resetDemo') { localStorage.removeItem(ORDERS_KEY); localStorage.removeItem(OUTBOX_KEY); orders(); return { ok: true }; }
     return { ok: false, error: 'Unknown action.' };
   }
 
