@@ -37,25 +37,27 @@
   }
 
   // ------------------------------------------------------ config binding
-  document.title = document.title.replace('Your Bakery Name', CFG.bakeryName);
+  document.title = document.title.replace('La Pâte Brillante', CFG.bakeryName);
   $$('[data-cfg]').forEach(function (el) { var v = CFG[el.dataset.cfg]; if (v != null) el.textContent = v; });
   $$('[data-cfg-money]').forEach(function (el) { el.textContent = money(CFG[el.dataset.cfgMoney]); });
   $$('[data-wa-link]').forEach(function (el) { el.href = waLink(CFG.whatsappNumber, 'Hi ' + CFG.bakeryName + '! 👋'); });
-  $$('[data-ig-link]').forEach(function (el) { el.href = 'https://instagram.com/' + CFG.instagramHandle; });
+  // Instagram & FSSAI only appear once they are filled in config.js
+  var IG = String(CFG.instagramHandle || '').replace(/^@/, '').trim();
+  $$('[data-ig-item]').forEach(function (el) { el.hidden = !IG; });
+  $$('[data-ig-link]').forEach(function (el) { if (IG) { el.href = 'https://instagram.com/' + encodeURIComponent(IG); el.textContent = 'Instagram @' + IG; } });
+  $$('[data-fssai]').forEach(function (el) { var n = String(CFG.fssaiNumber || '').trim(); el.textContent = n ? ' · FSSAI Reg. No. ' + n : ''; });
+  var OFFER = CFG.launchOffer && CFG.launchOffer.amount > 0 ? CFG.launchOffer : null;
+  $$('[data-offer-only]').forEach(function (el) { el.hidden = !OFFER; });
+  $$('[data-offer-money]').forEach(function (el) { if (OFFER) el.textContent = money(OFFER[el.dataset.offerMoney]); });
   $$('[data-year]').forEach(function (el) { el.textContent = new Date().getFullYear(); });
   var DL = CFG.delivery;
   $$('[data-dl]').forEach(function (el) { el.textContent = DL[el.dataset.dl]; });
   $$('[data-dl-money]').forEach(function (el) { el.textContent = money(DL[el.dataset.dlMoney]); });
-  $$('[data-dl-example]').forEach(function (el) {
-    // Same example as the printed menu, computed from the real rules
-    var sub = 500, km = DL.freeWithinKm + 3, f = R.deliveryFee(sub, String(km), DL);
-    if (f.fee > 0) el.innerHTML = 'Example: A ' + money(sub) + ' order going ' + km + ' km pays <b>' + money(f.fee) + '</b> (' + (km - DL.freeWithinKm) + ' km × ' + money(DL.perKm) + '). Add ' + money(f.addForFree) + " more and it's <b>free</b>.";
-  });
   var CUTOFF_TXT = 'Thursday, ' + R.formatHour(CFG.cutoffHour == null ? 15 : CFG.cutoffHour);
 
   // Hero sprinkles (deterministic, like the printed menu)
   $$('.sprinkles').forEach(function (box) {
-    var colors = ['#f4b6c2', '#e89a4f', '#8fd3c1', '#d94f6d', '#f3dcae', '#f7d0c4'];
+    var colors = ['#b08a4a', '#d8bd86', '#e6cf9f', '#8fa89a', '#c9a86a', '#f1e6cf'];
     var spots = [[3,18],[5,62],[2,88],[12,7],[27,5],[40,93],[47,4],[56,95],[61,8],[67,90],[73,5],[80,93],[86,12],[92,48],[96,80],[97,24],[20,94],[33,96]];
     box.innerHTML = spots.map(function (s, i) {
       return '<i style="left:' + s[0] + '%;top:' + s[1] + '%;background:' + colors[i % colors.length] + ';transform:rotate(' + ((i * 47) % 180 - 90) + 'deg)"></i>';
@@ -97,7 +99,7 @@
     var cart = loadCart();
     var drawer = $('#drawer'), overlay = $('.drawer-overlay');
     var selected = { date: null, slot: null };
-    var DIST_KEY = 'bakery_distance_v1';
+    var DIST_KEY = 'bakery_distance_v2';
     var distance = ''; try { distance = localStorage.getItem(DIST_KEY) || ''; } catch (e) {}
     function feeInfo(sub) { return R.deliveryFee(sub, distance, DL); }
     // "Free", "₹30", "To be confirmed", or a hint when no distance is chosen yet
@@ -106,11 +108,13 @@
       if (f.tbc) return '<span class="tbc">To be confirmed</span>';
       return f.fee === 0 ? '<span class="free">Free</span>' : money(f.fee);
     }
+    // Only nudge when the customer is (or might be) beyond the free radius and under the threshold
     function nudge(f, sub) {
-      if (sub >= DL.freeFromOrder) return '';
-      if (f.valid && f.fee === 0) return '';
-      return 'Add <b>' + money(DL.freeFromOrder - sub) + '</b> more for free delivery' + (f.valid ? '' : ' at any distance');
+      if (sub >= DL.freeFromOrder || !f.valid || f.fee === 0) return '';
+      return 'Add <b>' + money(DL.freeFromOrder - sub) + '</b> more for free delivery';
     }
+    // Launch offer: what the order WOULD get if it's a first order (the backend decides)
+    function offerFor(sub) { return R.offerAmount(sub, OFFER); }
 
     function loadCart() {
       try {
@@ -150,12 +154,28 @@
         '<div class="p-body"><h4>' + esc(it.name) + '</h4>' + desc +
         '<div class="p-foot">' + price + '<div class="ctl" data-ctl="' + it.id + '">' + addControl(it.id) + '</div></div></div></article>';
     }
+    function colsFor(n) { return n === 4 ? 'cols-4' : n === 2 ? 'cols-2' : 'cols-3'; }
+    function offerBanner() {
+      if (!OFFER) return '';
+      return '<aside class="offer-banner" id="launch-offer" aria-label="Launch offer"><div class="offer-inner">' +
+        '<p class="offer-kicker">Launch offer · New customers</p>' +
+        '<h3>' + money(OFFER.amount) + ' off your first order</h3>' +
+        '<p>On orders of ' + money(OFFER.minSubtotal) + ' or more. A little welcome from our kitchen to yours.</p>' +
+        '<small>Applied automatically at checkout — no code needed.</small></div></aside>';
+    }
     function renderMenu() {
       $('#menu-root').innerHTML = CFG.menu.map(function (cat) {
-        var cols = cat.items.length >= 4 ? 'cols-4' : 'cols-3';
-        return '<section class="cat cat-' + cat.style + '" id="cat-' + cat.id + '" aria-labelledby="h-' + cat.id + '">' +
+        // Box items inside a regular category (e.g. cupcake boxes) get their own little panel
+        var main = cat.style === 'boxes' ? cat.items : cat.items.filter(function (it) { return !it.box; });
+        var extra = cat.style === 'boxes' ? [] : cat.items.filter(function (it) { return it.box; });
+        return (cat.style === 'boxes' ? offerBanner() : '') +
+          '<section class="cat cat-' + cat.style + '" id="cat-' + cat.id + '" aria-labelledby="h-' + cat.id + '">' +
           '<div class="cat-head"><span class="cat-icon" aria-hidden="true">' + cat.icon + '</span><div><h3 id="h-' + cat.id + '">' + esc(cat.title) + '</h3><p class="cat-note">' + esc(cat.note) + '</p></div></div>' +
-          '<div class="products ' + cols + '">' + cat.items.map(function (it) { return productCard(it, cat); }).join('') + '</div></section>';
+          '<div class="products ' + colsFor(main.length) + '">' + main.map(function (it) { return productCard(it, cat); }).join('') + '</div>' +
+          (extra.length ? '<div class="sub-boxes" id="' + cat.id + '-boxes"><p class="sub-boxes-title">' + esc(cat.boxesTitle || 'Boxes') + '</p>' +
+            '<p class="sub-boxes-line">' + extra.map(function (it) { return esc(it.name) + ' ' + money(it.price); }).join(' · ') + '</p>' +
+            '<div class="products ' + colsFor(extra.length) + '">' + extra.map(function (it) { return productCard(it, cat); }).join('') + '</div></div>' : '') +
+          '</section>';
       }).join('');
       wireImages($('#menu-root'));
     }
@@ -184,7 +204,8 @@
           '<div class="cl-name"><b>' + esc(m.name) + '</b><small>' + money(m.price) + ' each</small></div>' +
           '<div class="cl-right"><div class="stepper small"><button type="button" data-dec="' + l.id + '" aria-label="Remove one">−</button><span>' + l.qty + '</span><button type="button" data-inc="' + l.id + '" aria-label="Add one">+</button></div>' +
           '<span class="cl-total">' + money(m.price * l.qty) + '</span></div></div>' +
-          (m.box ? '<label class="choices"><span>Flavour choices' + (l.qty > 1 ? ' (for all ' + l.qty + ' boxes)' : '') + '</span><input data-choices="' + l.id + '" maxlength="200" value="' + esc(l.choices) + '" placeholder="' + esc(meta.hint || 'Tell us your flavours') + '"></label>' : '') +
+          (m.pick !== 'none' ? '<label class="choices"><span>Flavour choices' + (l.qty > 1 ? ' (for all ' + l.qty + ' boxes)' : '') + (m.pick === 'optional' ? ' <em>· optional, blank = baker’s choice</em>' : '') + '</span><input data-choices="' + l.id + '" maxlength="200" value="' + esc(l.choices) + '" placeholder="' + esc(meta.hint || 'Tell us your flavours') + '"></label>'
+            : m.box && meta.contents ? '<p class="fixed-box">Fixed box: ' + esc(meta.contents.join(', ')) + '</p>' : '') +
           '</li>';
       }).join('');
       wireImages(ul);
@@ -192,6 +213,13 @@
 
       var min = CFG.minOrder, f = feeInfo(p.total), meter = $('[data-min-meter]');
       $$('[data-cart-delivery]').forEach(function (el) { el.innerHTML = feeLabel(f, p.total); });
+      var off = offerFor(p.total), offRow = $('[data-offer-row]'), offNote = $('[data-offer-note]');
+      if (offRow) { offRow.hidden = !off; $('[data-offer-amt]').textContent = '−' + money(off); }
+      if (offNote) {
+        offNote.hidden = !OFFER || p.total < min;
+        offNote.innerHTML = !OFFER ? '' : off ? '🎁 ' + money(off) + ' launch offer — applied automatically if this is your first order with us.'
+          : '🎁 New here? Add <b>' + money(OFFER.minSubtotal - p.total) + '</b> more for ' + money(OFFER.amount) + ' off your first order.';
+      }
       // Stage 1: reach the minimum order. Stage 2: progress towards free delivery at any distance.
       var stage2 = p.total >= min, target = stage2 ? DL.freeFromOrder : min;
       $('[data-min-bar]').style.width = Math.min(100, Math.round(p.total / target * 100)) + '%';
@@ -201,7 +229,7 @@
       $('[data-min-text]').innerHTML = !stage2
         ? 'Add <b>' + money(min - p.total) + '</b> more to reach the ' + money(min) + ' minimum order'
         : p.total >= DL.freeFromOrder ? '✓ Free delivery at any distance 🎉'
-        : '✓ Minimum reached' + (nd ? ' · ' + nd : ' · free delivery for you');
+        : '✓ Minimum reached' + (nd ? ' · ' + nd : f.valid ? ' · free delivery for you' : ' · free delivery within ' + DL.freeWithinKm + ' km');
       $('[data-to-checkout]').disabled = p.total < min;
     }
     function renderAll() { refreshControls(); renderCart(); if (currentView === 'checkout') renderCheckout(); }
@@ -250,15 +278,17 @@
     // Order summary at the top of checkout: subtotal, delivery (estimate), total, nudge
     function renderOrderMini(p) {
       p = p || priced();
-      var f = feeInfo(p.total), nd = nudge(f, p.total), grand = p.total + (f.fee || 0);
+      var f = feeInfo(p.total), nd = nudge(f, p.total), off = offerFor(p.total), grand = R.orderTotal(p.total, off, f.fee);
       var feeRow = f.valid
-        ? '<div><span>Delivery <small>· ' + esc(R.distanceLabel(distance, DL)) + (f.fee > 0 ? ' · estimate' : '') + '</small></span><span>' + feeLabel(f, p.total) + '</span></div>'
+        ? '<div><span>Delivery <small>· ' + esc(R.distanceLabel(distance, DL)) + '</small></span><span>' + feeLabel(f, p.total) + '</span></div>'
         : '<div><span>Delivery</span><span class="muted">choose distance below</span></div>';
       $('[data-order-mini]').innerHTML =
         '<div class="om-lines">' + p.lines.map(function (l) { return '<div><span>' + l.qty + ' × ' + esc(l.name) + '</span><span>' + money(l.lineTotal) + '</span></div>'; }).join('') + '</div>' +
-        '<div class="om-sub"><div><span>Subtotal</span><span>' + money(p.total) + '</span></div>' + feeRow + '</div>' +
+        '<div class="om-sub"><div><span>Subtotal</span><span>' + money(p.total) + '</span></div>' +
+        (off ? '<div class="om-offer"><span>Launch offer <small>· first order</small></span><span>−' + money(off) + '</span></div>' : '') + feeRow + '</div>' +
         '<div class="om-total"><span>Total' + (f.tbc && f.valid ? ' <small>+ delivery (we confirm)</small>' : '') + '</span><b>' + money(grand) + '</b></div>' +
-        (nd && f.valid ? '<p class="om-nudge">💡 ' + nd + '</p>' : '');
+        (off ? '<p class="om-offer-note">Includes the ' + money(off) + ' first-order offer, applied if this is your first order with us — otherwise ' + money(grand + off) + '.</p>' : '') +
+        (nd ? '<p class="om-nudge">💡 ' + nd + (f.tbc ? ' (or we confirm the fee)' : '') + '</p>' : '');
       $('[data-submit]').textContent = 'Place order · ' + money(grand) + (f.valid && f.tbc ? ' + delivery' : '');
     }
     function renderSlots() {
@@ -274,7 +304,7 @@
     }
     function setErr(name, msg) {
       var el = $('[data-err="' + name + '"]'); if (el) el.textContent = msg || '';
-      var input = $('#checkout-form [name="' + name + '"]'); if (input) input.classList.toggle('invalid', !!msg);
+      var input = name === 'distance' ? $('[data-distance-group]') : $('#checkout-form [name="' + name + '"]'); if (input) input.classList.toggle('invalid', !!msg);
     }
     function validate(form) {
       var ok = true, f = form.elements;
@@ -283,7 +313,7 @@
       if (!R.normalizePhone(f.phone.value)) { setErr('phone', 'Enter a valid 10-digit Indian mobile number.'); ok = false; }
       if (!R.isValidEmail(f.email.value)) { setErr('email', 'Enter a valid email address.'); ok = false; }
       if (f.address.value.trim().length < 10) { setErr('address', 'Please enter your full address (with area & pincode).'); ok = false; }
-      if (!f.distance.value) { setErr('distance', 'Choose roughly how far you are — or "not sure".'); ok = false; }
+      if (!distance) { setErr('distance', 'Choose within or beyond ' + DL.freeWithinKm + ' km — or "Not sure".'); ok = false; }
       if (!selected.date) { setErr('deliveryDate', 'Pick a delivery day.'); ok = false; }
       else if (!selected.slot) { setErr('slot', 'Pick a time slot.'); ok = false; }
       return ok;
@@ -294,7 +324,7 @@
       e.preventDefault();
       var form = e.target, p = priced();
       formError('');
-      var boxMissing = p.lines.filter(function (l) { return MENU_INDEX[l.id].box && !l.choices; });
+      var boxMissing = p.lines.filter(function (l) { return MENU_INDEX[l.id].pick === 'required' && !l.choices; });
       if (p.total < CFG.minOrder) { formError('Minimum order is ' + money(CFG.minOrder) + '. Please add a little more to your cart.'); return; }
       if (boxMissing.length) { showView('cart'); toast('Please add flavour choices for your ' + boxMissing[0].name); var fld = $('[data-choices="' + boxMissing[0].id + '"]'); if (fld) { fld.classList.add('invalid'); fld.focus(); } return; }
       if (!validate(form)) { var first = $('#checkout-form .invalid, #checkout-form .err:not(:empty)'); if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
@@ -304,7 +334,7 @@
         action: 'createOrder',
         order: {
           name: f.name.value.trim(), phone: R.normalizePhone(f.phone.value), email: f.email.value.trim(),
-          address: f.address.value.trim(), deliveryDate: selected.date, slot: selected.slot, distance: f.distance.value,
+          address: f.address.value.trim(), deliveryDate: selected.date, slot: selected.slot, distance: distance,
           notes: f.notes.value.trim(), website: f.website.value,
           items: cart.map(function (l) { return { id: l.id, qty: l.qty, choices: l.choices || '' }; })
         }
@@ -318,11 +348,13 @@
         $('[data-success-meta]').innerHTML =
           '<div><span>Delivery</span><b>' + esc(R.formatDate(res.deliveryDate)) + ' · ' + esc(res.slot) + '</b></div>' +
           '<div><span>Subtotal</span><b>' + money(res.subtotal) + '</b></div>' +
-          '<div><span>Delivery fee</span><b>' + esc(R.feeText(res)) + (res.deliveryFee > 0 ? ' <small>(estimate)</small>' : '') + '</b></div>' +
-          '<div class="sm-total"><span>Total</span><b>' + money(res.total) + (res.deliveryFeeTbc ? ' <small>+ delivery</small>' : '') + '</b></div>';
+          (res.discount > 0 ? '<div class="sm-offer"><span>Launch offer 🎁</span><b>−' + money(res.discount) + '</b></div>' : '') +
+          '<div><span>Delivery fee</span><b>' + esc(R.feeText(res)) + '</b></div>' +
+          '<div class="sm-total"><span>Total</span><b>' + money(res.total) + (res.deliveryFeeTbc ? ' <small>+ delivery</small>' : '') + '</b></div>' +
+          (!res.discount && offerFor(res.subtotal) ? '<p class="sm-note">The launch offer is for first orders only — we found an earlier order from this number, so it wasn’t applied.</p>' : '');
         $('[data-track-link]').href = 'status.html?id=' + encodeURIComponent(res.orderId);
-        $('[data-wa-order]').href = waLink(CFG.whatsappNumber, 'Hi! I just placed order ' + res.orderId + ' for ' + R.formatDate(res.deliveryDate) + ' (' + money(res.total) + ').');
-        cart = []; saveCart(); form.reset(); form.distance.value = distance; selected = { date: null, slot: null };
+        $('[data-wa-order]').href = waLink(CFG.whatsappNumber, 'Hi ' + CFG.bakeryName + '! I just placed order ' + res.orderId + ' for ' + R.formatDate(res.deliveryDate) + ' (' + money(res.total) + (res.deliveryFeeTbc ? ' + delivery' : '') + ').');
+        cart = []; saveCart(); form.reset(); setDistanceUI(); selected = { date: null, slot: null };
         showView('success'); renderAll();
       });
     }
@@ -336,7 +368,7 @@
       else if (t.hasAttribute('data-open-cart')) openCart();
       else if (t.hasAttribute('data-close-cart')) { e.preventDefault(); closeCart(); }
       else if (t.hasAttribute('data-to-checkout')) {
-        var missing = cart.filter(function (l) { return MENU_INDEX[l.id].box && !String(l.choices || '').trim(); });
+        var missing = cart.filter(function (l) { return MENU_INDEX[l.id].pick === 'required' && !String(l.choices || '').trim(); });
         if (missing.length) {
           toast('Tell us the flavours for your ' + MENU_INDEX[missing[0].id].name);
           var fld = $('[data-choices="' + missing[0].id + '"]'); if (fld) { fld.classList.add('invalid'); fld.focus(); }
@@ -359,14 +391,19 @@
     });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && drawer.classList.contains('open')) closeCart(); });
     $('#checkout-form').addEventListener('submit', submitOrder);
-    // Distance dropdown (remembered for next time)
-    var distSel = $('[data-distance]');
-    distSel.insertAdjacentHTML('beforeend', R.distanceOptions(DL).map(function (o) { return '<option value="' + o.value + '">' + esc(o.label) + '</option>'; }).join(''));
-    distSel.value = distance; if (distSel.value !== distance) distance = '';
-    $('[data-distance-hint]').textContent = 'Measured from our kitchen' + (CFG.kitchenArea ? ' in ' + CFG.kitchenArea : '') + '. Free up to ' + DL.freeWithinKm +
-      ' km, or on orders of ' + money(DL.freeFromOrder) + '+. Not sure? Pick the last option and we\'ll confirm the fee.';
-    distSel.addEventListener('change', function () {
-      distance = distSel.value; try { localStorage.setItem(DIST_KEY, distance); } catch (e) {}
+    // Distance choice: Within / Beyond the free radius / Not sure (remembered for next time)
+    var distGroup = $('[data-distance-group]');
+    distGroup.innerHTML = R.distanceOptions(DL).map(function (o) {
+      return '<label class="seg-opt"><input type="radio" name="distance" value="' + o.value + '"><span>' + esc(o.label) + '</span></label>';
+    }).join('');
+    if (!R.distanceOptions(DL).some(function (o) { return o.value === distance; })) distance = '';
+    function setDistanceUI() { $$('input[name="distance"]', distGroup).forEach(function (r) { r.checked = r.value === distance; }); }
+    setDistanceUI();
+    $('[data-distance-hint]').textContent = 'Within ' + DL.freeWithinKm + ' km: free on every order. Beyond ' + DL.freeWithinKm + ' km: free on orders of ' +
+      money(DL.freeFromOrder) + '+ (items total, before any discount), otherwise ' + money(DL.flatBeyond) + '. Not sure? We\'ll confirm the fee before confirming your order.';
+    distGroup.addEventListener('change', function (e) {
+      if (e.target.name !== 'distance') return;
+      distance = e.target.value; try { localStorage.setItem(DIST_KEY, distance); } catch (err) {}
       setErr('distance', ''); renderCart(); renderOrderMini();
     });
 
@@ -394,6 +431,7 @@
       '<dl class="status-meta"><div><dt>Delivery</dt><dd>' + esc(R.formatDate(o.deliveryDate)) + ' · ' + esc(o.slot) + '</dd></div>' +
       '<div><dt>Items</dt><dd>' + (o.items || []).map(function (l) { return esc(l.qty + ' × ' + l.name) + (l.choices ? ' <small>(' + esc(l.choices) + ')</small>' : ''); }).join('<br>') + '</dd></div>' +
       '<div><dt>Subtotal</dt><dd>' + money(o.subtotal) + '</dd></div>' +
+      (o.discount > 0 ? '<div><dt>Launch offer</dt><dd>−' + money(o.discount) + ' <small>· first order</small></dd></div>' : '') +
       '<div><dt>Delivery</dt><dd>' + esc(R.feeText(o)) + (o.distanceLabel ? ' <small>· ' + esc(o.distanceLabel) + '</small>' : '') + '</dd></div>' +
       '<div><dt>Total</dt><dd><b>' + money(o.total) + '</b>' + (o.deliveryFeeTbc ? ' <small>+ delivery (to be confirmed)</small>' : '') + '</dd></div></dl>' +
       '</article>';
@@ -460,7 +498,7 @@
       var first = String(o.name).split(' ')[0];
       var when = R.formatDate(o.deliveryDate) + ' (' + o.slot + ')';
       var items = (o.items || []).map(function (l) { return '• ' + l.qty + ' × ' + l.name + (l.choices ? ' — ' + l.choices : ''); }).join('\n');
-      var money3 = 'Subtotal: ' + money(o.subtotal) + '\nDelivery (' + o.distanceLabel + '): ' + R.feeText(o) + '\nTotal: ' + money(o.total) + (o.deliveryFeeTbc ? ' + delivery' : '');
+      var money3 = 'Subtotal: ' + money(o.subtotal) + (o.discount > 0 ? '\nLaunch offer (first order): −' + money(o.discount) : '') + '\nDelivery (' + o.distanceLabel + '): ' + R.feeText(o) + '\nTotal: ' + money(o.total) + (o.deliveryFeeTbc ? ' + delivery' : '');
       if (o.status === 'Confirmed') {
         return 'Hi ' + first + '! 🎉 Your order ' + o.orderId + ' from ' + CFG.bakeryName + ' is confirmed.\n\n' + items +
           '\n\n' + money3 + '\nDelivery: ' + when + '\nAddress: ' + o.address +
@@ -499,10 +537,11 @@
           '<a href="mailto:' + esc(o.email) + '">' + esc(o.email) + '</a><span class="muted">' + esc(o.address) + '</span></div>' +
           '<ul class="oc-items">' + (o.items || []).map(function (l) { return '<li><span>' + l.qty + ' × ' + esc(l.name) + (l.choices ? '<small>' + esc(l.choices) + '</small>' : '') + '</span><span>' + money(l.lineTotal) + '</span></li>'; }).join('') +
           '<li class="oc-sub"><span>Subtotal</span><span>' + money(o.subtotal) + '</span></li>' +
+          (o.discount > 0 ? '<li class="oc-offer"><span>Launch offer <small>first order</small></span><span>−' + money(o.discount) + '</span></li>' : '') +
           '<li class="oc-fee"><label for="fee-' + esc(o.orderId) + '">Delivery<small>' + esc(o.distanceLabel || '') + ' · ' + (o.deliveryFeeTbc ? '<em class="tbc">fee to confirm</em>' : o.status === 'Pending' ? 'estimate' : 'final') + '</small></label>' +
           '<span class="fee-edit"><span class="fee-cur">₹</span><input id="fee-' + esc(o.orderId) + '" class="fee-input" data-fee type="number" inputmode="numeric" min="0" max="5000" step="10" value="' + (o.deliveryFeeTbc || o.deliveryFee == null ? '' : o.deliveryFee) + '" placeholder="TBC" data-orig="' + (o.deliveryFeeTbc || o.deliveryFee == null ? '' : o.deliveryFee) + '" aria-label="Delivery fee in rupees">' +
           '<button type="button" class="fee-save" data-save-fee hidden>Save</button></span></li>' +
-          '<li class="oc-total"><span>Total</span><b data-oc-total data-subtotal="' + Number(o.subtotal) + '">' + money(o.total) + (o.deliveryFeeTbc ? ' <small class="tbc-inline">+ delivery</small>' : '') + '</b></li></ul></div>' +
+          '<li class="oc-total"><span>Total</span><b data-oc-total data-subtotal="' + Number(o.subtotal) + '" data-discount="' + (Number(o.discount) || 0) + '">' + money(o.total) + (o.deliveryFeeTbc ? ' <small class="tbc-inline">+ delivery</small>' : '') + '</b></li></ul></div>' +
           (o.notes ? '<p class="oc-notes">📝 ' + esc(o.notes) + '</p>' : '') +
           '<div class="oc-actions"><input class="oc-note" data-note placeholder="Note to customer (optional)" maxlength="500" value="' + esc(o.adminNote || '') + '">' +
           '<div class="oc-buttons">' +
@@ -517,7 +556,7 @@
     document.addEventListener('input', function (e) {
       if (!e.target.matches || !e.target.matches('[data-fee]')) return;
       var card = e.target.closest('[data-order]'), totalEl = card.querySelector('[data-oc-total]');
-      var v = R.parseFee(e.target.value), sub = Number(totalEl.dataset.subtotal);
+      var v = R.parseFee(e.target.value), sub = Number(totalEl.dataset.subtotal) - Number(totalEl.dataset.discount || 0);
       totalEl.innerHTML = (v === undefined || isNaN(v)) ? money(sub) + ' <small class="tbc-inline">+ delivery</small>' : money(sub + v);
       card.querySelector('[data-save-fee]').hidden = e.target.value === e.target.dataset.orig;
       e.target.classList.toggle('invalid', v !== undefined && isNaN(v));

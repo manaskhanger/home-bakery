@@ -60,15 +60,15 @@ function checkPassword(p) {
 }
 
 function createOrder(p, cfg) {
-  const v = R.validateOrder(p.order, cfg, TEST_NOW());
-  if (!v.ok) return { ok: false, error: v.error, errors: v.errors };
   const orders = readJSON(ORDERS_FILE);
+  const v = R.validateOrder(p.order, cfg, TEST_NOW(), { hasPriorOrder: (phone) => R.hasPriorOrder(orders, phone) });
+  if (!v.ok) return { ok: false, error: v.error, errors: v.errors };
   const now = new Date().toISOString();
   const order = { orderId: newOrderId(orders), createdAt: now, ...v.fields, status: 'Pending', adminNote: '', updatedAt: now, lastEmailedStatus: '' };
   orders.push(order);
   writeJSON(ORDERS_FILE, orders);
   sendMail('received', order, cfg);
-  return { ok: true, orderId: order.orderId, subtotal: order.subtotal, deliveryFee: order.deliveryFee, deliveryFeeTbc: order.deliveryFeeTbc,
+  return { ok: true, orderId: order.orderId, subtotal: order.subtotal, discount: order.discount, deliveryFee: order.deliveryFee, deliveryFeeTbc: order.deliveryFeeTbc,
     total: order.total, status: order.status, deliveryDate: order.deliveryDate, slot: order.slot };
 }
 
@@ -121,10 +121,10 @@ function checkCodeGsSync() {
     Object.values(idx).forEach((m) => {
       const g = gsMenu[m.id];
       if (!g) issues.push(`${m.id} missing in Code.gs`);
-      else if (g.price !== m.price || g.name !== m.name || !!g.box !== m.box || !!g.fridayOk !== m.fridayOk) issues.push(`${m.id} differs`);
+      else if (g.price !== m.price || g.name !== m.name || !!g.box !== m.box || (g.pick || 'none') !== m.pick || !!g.fridayOk !== m.fridayOk) issues.push(`${m.id} differs`);
     });
     Object.keys(gsMenu).forEach((id) => { if (!idx[id]) issues.push(`${id} only in Code.gs`); });
-    ['minOrder', 'weekendsToShow', 'cutoffHour', 'weekendSlots', 'fridaySlots', 'delivery'].forEach((k) => {
+    ['minOrder', 'weekendsToShow', 'cutoffHour', 'weekendSlots', 'fridaySlots', 'delivery', 'launchOffer'].forEach((k) => {
       if (JSON.stringify(gsRules[k]) !== JSON.stringify(cfg[k])) issues.push(`rule ${k} differs`);
     });
     console.log(issues.length ? `⚠️  config.js and apps-script/Code.gs are out of sync: ${issues.join('; ')}` : '✓ config.js menu & rules match apps-script/Code.gs');

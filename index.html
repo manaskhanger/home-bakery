@@ -3,40 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Your Bakery Name · Weekend bakes, made to order</title>
-  <meta name="description" content="A little luxury, every weekend. Small-batch cookies, cupcakes and cake toast, baked to order in our home kitchen. Order by Thursday 3 pm for weekend delivery.">
-  <meta name="theme-color" content="#3b2019">
+  <title>La Pâte Brillante · Weekend bakes, made to order</title>
+  <meta name="description" content="A little luxury, every weekend. Small-batch cookies, cupcakes, cake toast and gift boxes, baked to order in a home kitchen with jaggery instead of white sugar. Order by Thursday 3 pm for weekend delivery.">
+  <meta name="theme-color" content="#1d332d">
   <!-- Social sharing: og:image / og:url must be full https:// URLs of where the site is hosted -->
   <link rel="canonical" href="https://manaskhanger.github.io/home-bakery/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Your Bakery Name">
-  <meta property="og:title" content="Your Bakery Name · Weekend bakes, made to order">
-  <meta property="og:description" content="A little luxury, every weekend. Small-batch cookies, cupcakes and cake toast, baked to order in our home kitchen. Order by Thursday 3 pm for weekend delivery.">
+  <meta property="og:site_name" content="La Pâte Brillante">
+  <meta property="og:title" content="La Pâte Brillante · Weekend bakes, made to order">
+  <meta property="og:description" content="A little luxury, every weekend. Small-batch cookies, cupcakes, cake toast and gift boxes, baked to order in a home kitchen with jaggery instead of white sugar. Order by Thursday 3 pm for weekend delivery.">
   <meta property="og:url" content="https://manaskhanger.github.io/home-bakery/">
   <meta property="og:image" content="https://manaskhanger.github.io/home-bakery/images/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="La Pâte Brillante logo — A little luxury, every weekend.">
   <meta property="og:locale" content="en_IN">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://manaskhanger.github.io/home-bakery/images/og-image.jpg">
   <link rel="preload" as="image" href="images/hero.jpg">
-  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="images/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="images/favicon-48.png" sizes="48x48" type="image/png">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body data-page="home">
   <header class="site-header">
     <div class="wrap header-inner">
-      <a href="index.html" class="brand"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></a>
+      <a href="index.html" class="brand"><img class="brand-logo" src="images/logo-160.png" alt="" width="44" height="44"><span data-cfg="bakeryName">La Pâte Brillante</span></a>
       <nav class="nav" aria-label="Main">
         <a href="#menu">Menu</a>
-        <a href="#delivery">Delivery</a>
         <a href="#how">How it works</a>
+        <a href="#delivery">Delivery</a>
         <a href="status.html">Track order</a>
       </nav>
       <button class="cart-btn" type="button" data-open-cart aria-label="Open cart">
@@ -52,10 +53,11 @@
       <div class="sprinkles" aria-hidden="true"></div>
       <div class="wrap hero-inner">
         <div class="hero-copy">
+          <img class="hero-logo" src="images/logo-160.png" alt="La Pâte Brillante logo" width="92" height="92">
           <p class="eyebrow" data-cfg="eyebrow">Weekend bakes · Made to order</p>
-          <h1 class="hero-title" data-cfg="bakeryName">Your Bakery Name</h1>
+          <h1 class="hero-title" data-cfg="bakeryName">La Pâte Brillante</h1>
           <p class="hero-tagline" data-cfg="headline">A little luxury, every weekend.</p>
-          <p class="hero-sub" data-cfg="tagline">Small batches, baked fresh in our home kitchen</p>
+          <p class="hero-sub" data-cfg="tagline">Small batches, baked fresh in a home kitchen</p>
           <p class="hero-note">Cookies, cupcakes &amp; crisp cake toast — order by Thursday, 3 pm and we'll bring them to your door on Saturday or Sunday.</p>
           <div class="hero-actions">
             <a href="#menu" class="btn btn-cream">Browse the menu</a>
@@ -71,8 +73,20 @@
 
     <section class="wrap promises" aria-label="Our promise">
       <div class="promise"><span class="diamond" aria-hidden="true"></span><h3>Baked to order</h3><p>Nothing sits on a shelf. Every box is baked for your delivery day.</p></div>
-      <div class="promise"><span class="diamond" aria-hidden="true"></span><h3>Real ingredients</h3><p>Pure butter, real chocolate, no preservatives.</p></div>
-      <div class="promise"><span class="diamond" aria-hidden="true"></span><h3>Sealed &amp; hand-delivered</h3><p>Packed fresh and brought to your door by us.</p></div>
+      <div class="promise"><span class="diamond" aria-hidden="true"></span><h3>Healthier, with jaggery</h3><p>Our doughs and sponges use jaggery powder instead of white sugar. Pure butter, no preservatives.</p></div>
+      <div class="promise"><span class="diamond" aria-hidden="true"></span><h3>Sealed &amp; hand-delivered</h3><p>Packed fresh and brought to your door.</p></div>
+    </section>
+
+    <section id="how" class="wrap how">
+      <div class="section-head">
+        <p class="kicker">How it works</p>
+        <h2>Simple as one, two, three</h2>
+      </div>
+      <ol class="steps">
+        <li><span class="step-n">01</span><h3>Order by Thursday</h3><p>Place your order right here by <b>Thursday, 3 pm</b> — or send it to us on <a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp</a>.</p></li>
+        <li><span class="step-n">02</span><h3>We bake fresh</h3><p>Your order goes into the oven close to delivery, never days ahead.</p></li>
+        <li><span class="step-n">03</span><h3>Delivered Sat &amp; Sun</h3><p>Cake toast can also come on Friday evening. Track your order anytime with your Order ID.</p></li>
+      </ol>
     </section>
 
     <section id="menu" class="wrap menu" aria-label="Menu">
@@ -96,37 +110,21 @@
         <div class="day-pill"><b>Saturday</b><span>all menu</span></div>
         <div class="day-pill"><b>Sunday</b><span>all menu</span></div>
       </div>
-      <div class="tiers">
+      <div class="tiers tiers-2">
         <div class="tier tier-dark">
-          <small>Up to <span data-dl="freeWithinKm">3</span> km</small>
+          <small>Complimentary</small>
           <b>Free delivery</b>
-          <p>On every order, any size.</p>
+          <p>Up to <span data-dl="freeWithinKm">3</span> km · on every order</p>
+          <p>Beyond <span data-dl="freeWithinKm">3</span> km · on orders of <span data-dl-money="freeFromOrder">₹800</span> or more</p>
         </div>
         <div class="tier">
-          <small>Beyond <span data-dl="freeWithinKm">3</span> km · <span data-dl-money="freeFromOrder">₹800</span>+</small>
-          <b>Free delivery</b>
-          <p>Orders of <span data-dl-money="freeFromOrder">₹800</span> or more travel free.</p>
-        </div>
-        <div class="tier">
-          <small>Beyond <span data-dl="freeWithinKm">3</span> km · under <span data-dl-money="freeFromOrder">₹800</span></small>
-          <b><span data-dl-money="perKm">₹10</span> / km</b>
-          <p>Charged only for the distance past <span data-dl="freeWithinKm">3</span> km.</p>
+          <small>Beyond <span data-dl="freeWithinKm">3</span> km</small>
+          <b data-dl-money="flatBeyond">₹60</b>
+          <p>On orders under <span data-dl-money="freeFromOrder">₹800</span>.</p>
         </div>
       </div>
-      <p class="delivery-example" data-dl-example>Example: A ₹500 order going 6 km pays <b>₹30</b> (3 km × ₹10). Add ₹300 more and it's <b>free</b>.</p>
     </section>
 
-    <section id="how" class="wrap how">
-      <div class="section-head">
-        <p class="kicker">How it works</p>
-        <h2>Simple as one, two, three</h2>
-      </div>
-      <ol class="steps">
-        <li><span class="step-n">01</span><h3>Order by Thursday</h3><p>Place your order right here by <b>Thursday, 3 pm</b> — or send it to us on <a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp</a>.</p></li>
-        <li><span class="step-n">02</span><h3>We bake fresh</h3><p>Your order goes into the oven close to delivery, never days ahead.</p></li>
-        <li><span class="step-n">03</span><h3>Delivered Sat &amp; Sun</h3><p>Cake toast can also come on Friday evening. Track your order anytime with your Order ID.</p></li>
-      </ol>
-    </section>
   </main>
 
   <footer class="site-footer">
@@ -134,7 +132,7 @@
       <div class="footer-card">
         <div class="footer-grid">
           <div class="f-brand">
-            <p class="f-name"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></p>
+            <p class="f-name"><img class="brand-logo" src="images/logo-160.png" alt="" width="44" height="44"><span data-cfg="bakeryName">La Pâte Brillante</span></p>
             <p class="f-tag" data-cfg="headline">A little luxury, every weekend.</p>
             <a class="btn btn-cream btn-small" data-wa-link href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
           </div>
@@ -144,23 +142,25 @@
               <li>Order by Thursday, 3 pm</li>
               <li>Delivered Sat &amp; Sun · Friday evening for cake toast</li>
               <li>Minimum order <span data-cfg-money="minOrder">₹250</span></li>
-              <li>Free delivery up to <span data-dl="freeWithinKm">3</span> km, or on orders of <span data-dl-money="freeFromOrder">₹800</span>+</li>
-              <li>Otherwise <span data-dl-money="perKm">₹10</span>/km past <span data-dl="freeWithinKm">3</span> km</li>
+              <li>Free delivery up to <span data-dl="freeWithinKm">3</span> km · beyond, free on orders of <span data-dl-money="freeFromOrder">₹800</span>+</li>
+              <li>Beyond <span data-dl="freeWithinKm">3</span> km on orders under <span data-dl-money="freeFromOrder">₹800</span>: <span data-dl-money="flatBeyond">₹60</span></li>
+              <li data-offer-only>New customers: <span data-offer-money="amount">₹50</span> off your first order of <span data-offer-money="minSubtotal">₹500</span>+</li>
             </ul>
           </div>
           <div>
             <h4>Say hello</h4>
             <ul class="f-list">
-              <li><a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp <span data-cfg="whatsappDisplay">+91 [YOUR NUMBER]</span></a></li>
-              <li><a data-ig-link href="#" target="_blank" rel="noopener">Instagram @<span data-cfg="instagramHandle">yourhandle</span></a></li>
+              <li><a data-wa-link href="https://wa.me/919599909742" target="_blank" rel="noopener">WhatsApp <span data-cfg="whatsappDisplay">+91 95999 09742</span></a></li>
+              <li data-ig-item hidden><a data-ig-link href="#" target="_blank" rel="noopener">Instagram</a></li>
               <li><a href="status.html">Track your order</a></li>
               <li><a href="index.html#menu">See the menu</a></li>
             </ul>
           </div>
         </div>
       </div>
+      <p class="f-order"><small>Order on WhatsApp</small><a data-wa-link href="https://wa.me/919599909742" target="_blank" rel="noopener" data-cfg="whatsappDisplay">+91 95999 09742</a></p>
       <p class="f-thanks">Thank you for supporting small business!</p>
-      <p class="copyright">© <span data-year></span> <span data-cfg="bakeryName">Your Bakery Name</span> · FSSAI Reg. No. <span data-cfg="fssaiNumber">[YOUR NUMBER]</span> · <a href="credits.html">Photo credits</a></p>
+      <p class="copyright">© <span data-year></span> <span data-cfg="bakeryName">La Pâte Brillante</span><span data-fssai></span> · <a href="credits.html">Photo credits</a></p>
     </div>
   </footer>
 
@@ -198,8 +198,10 @@
         </div>
         <div class="totals">
           <div><span>Subtotal</span><span data-cart-total>₹0</span></div>
+          <div class="t-offer" data-offer-row hidden><span>Launch offer <small>first order</small></span><span data-offer-amt>−₹50</span></div>
           <div class="t-delivery"><span>Delivery</span><span data-cart-delivery>Free up to 3 km</span></div>
         </div>
+        <p class="offer-note" data-offer-note hidden></p>
         <button class="btn btn-rasp btn-block" type="button" data-to-checkout>Continue to details</button>
       </div>
     </div>
@@ -224,10 +226,10 @@
           <label class="field"><span>Delivery address</span>
             <textarea name="address" rows="3" autocomplete="street-address" required maxlength="400" placeholder="House / flat, street, area, landmark, pincode"></textarea>
             <small class="err" data-err="address"></small></label>
-          <label class="field"><span>How far are you from us? <em>(approx.)</em></span>
-            <select name="distance" required data-distance><option value="">Choose distance…</option></select>
-            <small class="field-hint" data-distance-hint>Measured from our kitchen. Free up to 3 km — not sure? Pick the last option and we'll confirm the fee.</small>
-            <small class="err" data-err="distance"></small></label>
+          <div class="field dist-field"><span id="dist-label">Where are we delivering? <em>(from our kitchen)</em></span>
+            <div class="seg" role="radiogroup" aria-labelledby="dist-label" data-distance-group></div>
+            <small class="field-hint" data-distance-hint></small>
+            <small class="err" data-err="distance"></small></div>
         </fieldset>
 
         <fieldset>
@@ -278,9 +280,9 @@
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
 
-  <script src="config.js?v=2"></script>
-  <script src="rules.js?v=2"></script>
-  <script src="demo-backend.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="rules.js?v=3"></script>
+  <script src="demo-backend.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

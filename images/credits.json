@@ -1,17 +1,192 @@
 [
- {"file":"hero.jpg","subject":"Hero – stacked cookies with chocolate drizzle","source":"Pexels","page":"https://www.pexels.com/photo/homemade-cookies-on-a-counter-top-20558712/","image":"https://images.pexels.com/photos/20558712/pexels-photo-20558712.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"cookie-choco-chip.jpg","subject":"Classic Choco-Chip cookie","source":"Unsplash","page":"https://unsplash.com/photos/a-stack-of-chocolate-chip-cookies-on-a-marble-surface-Tt6mJRbBVN8","image":"https://images.unsplash.com/photo-1679943366650-3cbab5ce5ff4","author":"Unsplash contributor (see page)","license":"Unsplash License","licenseUrl":"https://unsplash.com/license"},
- {"file":"cookie-nutella-stuffed.jpg","subject":"Nutella-Stuffed cookie (stand-in: choc-chip cookies with a Nutella jar)","source":"Pexels","page":"https://www.pexels.com/photo/chocolate-chip-cookies-and-a-jar-of-nutella-13815329/","image":"https://images.pexels.com/photos/13815329/pexels-photo-13815329.jpeg","author":"Chantelle Mundy Dunne","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"cookie-dark-choc-sea-salt.jpg","subject":"Dark Choc Sea Salt cookie – \"Chocolate Caramel Cookies with Sea Salt\"","source":"Flickr (via Openverse)","page":"https://www.flickr.com/photos/70757891@N00/8276253966","image":"https://live.staticflickr.com/8492/8276253966_afa4a7a57f_b.jpg","author":"grongar","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0/"},
- {"file":"cupcake-red-velvet.jpg","subject":"Red Velvet cupcake","source":"Unsplash","page":"https://unsplash.com/photos/red-velvet-cupcakes-with-white-and-red-frosting-w_n-SmloN_Y","image":"https://images.unsplash.com/photo-1761751361544-33eeb10a624d","author":"Esra Afşar","license":"Unsplash License","licenseUrl":"https://unsplash.com/license"},
- {"file":"cupcake-belgian-chocolate.jpg","subject":"Belgian Chocolate cupcake","source":"Unsplash","page":"https://unsplash.com/photos/a-chocolate-cupcake-with-chocolate-frosting-on-a-black-background-zB7r9P22rJw","image":"https://images.unsplash.com/photo-1640806353257-6c408529d822","author":"Unsplash contributor (see page)","license":"Unsplash License","licenseUrl":"https://unsplash.com/license"},
- {"file":"cupcake-salted-caramel.jpg","subject":"Salted Caramel cupcake – \"Salted Caramel Cupcake\"","source":"Flickr (via Openverse)","page":"https://www.flickr.com/photos/68737200@N00/5442006855","image":"https://live.staticflickr.com/4143/5442006855_d7f65c1ecf_b.jpg","author":"Shoshanah","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0/"},
- {"file":"caketoast-vanilla.jpg","subject":"Classic Vanilla cake toast (stand-in: \"Almond lavender biscotti\")","source":"Flickr (via Openverse)","page":"https://www.flickr.com/photos/51035597937@N01/4393374961","image":"https://live.staticflickr.com/4057/4393374961_7af89180d8_b.jpg","author":"mccun934","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0/"},
- {"file":"caketoast-elaichi.jpg","subject":"Elaichi cake toast (stand-in: tea with cake slices)","source":"Pexels","page":"https://www.pexels.com/photo/cup-of-tea-placed-near-plate-with-cake-7175436/","image":"https://images.pexels.com/photos/7175436/pexels-photo-7175436.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"caketoast-chocolate.jpg","subject":"Chocolate cake toast (stand-in: chocolate-covered biscotti)","source":"Pexels","page":"https://www.pexels.com/photo/chocolate-covered-biscotti-spilled-from-cup-33433970/","image":"https://images.pexels.com/photos/33433970/pexels-photo-33433970.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"caketoast-tutti-frutti.jpg","subject":"Tutti Frutti cake toast (stand-in: \"Caramel Apple Biscotti\")","source":"Flickr (via Openverse)","page":"https://www.flickr.com/photos/25128194@N02/4121522578","image":"https://live.staticflickr.com/2582/4121522578_2b7bbc9bcd_b.jpg","author":"Vegan Feast Catering","license":"CC BY 2.0","licenseUrl":"https://creativecommons.org/licenses/by/2.0/"},
- {"file":"box-cookie.jpg","subject":"Cookie Box – variety of cookies in a box","source":"Pexels","page":"https://www.pexels.com/photo/variety-of-cookies-in-a-box-17517617/","image":"https://images.pexels.com/photos/17517617/pexels-photo-17517617.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"box-cupcake.jpg","subject":"Cupcake Box – cupcakes in a box","source":"Pexels","page":"https://www.pexels.com/photo/cupcakes-in-a-box-7552743/","image":"https://images.pexels.com/photos/7552743/pexels-photo-7552743.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"box-party.jpg","subject":"Party Box – cupcakes in a box","source":"Pexels","page":"https://www.pexels.com/photo/delicious-gulab-jamun-cupcakes-in-a-box-29727258/","image":"https://images.pexels.com/photos/29727258/pexels-photo-29727258.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"},
- {"file":"box-tasting.jpg","subject":"Tasting Box (stand-in: cupcakes with gift wrap)","source":"Pexels","page":"https://www.pexels.com/photo/cupcakes-and-a-present-on-a-white-surface-8014830/","image":"https://images.pexels.com/photos/8014830/pexels-photo-8014830.jpeg","author":"Pexels contributor (see page)","license":"Pexels License","licenseUrl":"https://www.pexels.com/license/"}
+ {
+  "file": "hero.jpg",
+  "subject": "Hero – stacked cookies with chocolate drizzle",
+  "source": "Pexels",
+  "page": "https://www.pexels.com/photo/homemade-cookies-on-a-counter-top-20558712/",
+  "image": "https://images.pexels.com/photos/20558712/pexels-photo-20558712.jpeg",
+  "author": "Pexels contributor (see page)",
+  "license": "Pexels License",
+  "licenseUrl": "https://www.pexels.com/license/"
+ },
+ {
+  "file": "cookie-choco-chip.jpg",
+  "subject": "Classic Choco-Chip cookie",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/a-stack-of-chocolate-chip-cookies-on-a-marble-surface-Tt6mJRbBVN8",
+  "image": "https://images.unsplash.com/photo-1679943366650-3cbab5ce5ff4",
+  "author": "Unsplash contributor (see page)",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "cookie-dark-chocolate-stuffed.jpg",
+  "subject": "Dark Chocolate Stuffed cookie – stack of cookies with filling flowing out",
+  "source": "Pexels",
+  "page": "https://www.pexels.com/photo/stack-of-cookies-with-filling-flowing-out-16974016/",
+  "image": "https://images.pexels.com/photos/16974016/pexels-photo-16974016.jpeg",
+  "author": "Ali Dashti",
+  "license": "Pexels License",
+  "licenseUrl": "https://www.pexels.com/license/"
+ },
+ {
+  "file": "cookie-dark-choc-sea-salt.jpg",
+  "subject": "Dark Choc Sea Salt cookie – \"Chocolate Caramel Cookies with Sea Salt\"",
+  "source": "Flickr (via Openverse)",
+  "page": "https://www.flickr.com/photos/70757891@N00/8276253966",
+  "image": "https://live.staticflickr.com/8492/8276253966_afa4a7a57f_b.jpg",
+  "author": "grongar",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+ },
+ {
+  "file": "cupcake-red-velvet.jpg",
+  "subject": "Red Velvet cupcake",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/red-velvet-cupcakes-with-white-and-red-frosting-w_n-SmloN_Y",
+  "image": "https://images.unsplash.com/photo-1761751361544-33eeb10a624d",
+  "author": "Esra Afşar",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "cupcake-belgian-truffle.jpg",
+  "subject": "Belgian Chocolate Truffle cupcake",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/a-chocolate-cupcake-with-chocolate-frosting-on-a-black-background-zB7r9P22rJw",
+  "image": "https://images.unsplash.com/photo-1640806353257-6c408529d822",
+  "author": "Unsplash contributor (see page)",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "cupcake-strawberry-cream.jpg",
+  "subject": "Strawberry Cream cupcake – \"Strawberry cupcakes\"",
+  "source": "Flickr (via Openverse)",
+  "page": "https://www.flickr.com/photos/13934039@N05/6092771387",
+  "image": "https://live.staticflickr.com/6203/6092771387_cd90747687_b.jpg",
+  "author": "Selma90",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+ },
+ {
+  "file": "cupcake-box-4.jpg",
+  "subject": "Cupcake Box of 4 (stand-in: a box of cupcakes with pink frosting)",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/a-box-of-cupcakes-with-pink-frosting-m5XCLl69Sus",
+  "image": "https://images.unsplash.com/photo-1677840147161-49e9c1508b0b",
+  "author": "Joshua Glass",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "cupcake-box-6.jpg",
+  "subject": "Cupcake Box of 6 – assortment of decorated cupcakes in a box",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/assortment-of-decorated-cupcakes-in-a-box-8A-q_8cOK-k",
+  "image": "https://images.unsplash.com/photo-1771016834113-3c364c1e89b8",
+  "author": "Glen Carrie",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "caketoast-vanilla.jpg",
+  "subject": "Classic Vanilla cake toast (stand-in: \"Almond lavender biscotti\")",
+  "source": "Flickr (via Openverse)",
+  "page": "https://www.flickr.com/photos/51035597937@N01/4393374961",
+  "image": "https://live.staticflickr.com/4057/4393374961_7af89180d8_b.jpg",
+  "author": "mccun934",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+ },
+ {
+  "file": "caketoast-elaichi.jpg",
+  "subject": "Elaichi cake toast (stand-in: tea with cake slices)",
+  "source": "Pexels",
+  "page": "https://www.pexels.com/photo/cup-of-tea-placed-near-plate-with-cake-7175436/",
+  "image": "https://images.pexels.com/photos/7175436/pexels-photo-7175436.jpeg",
+  "author": "Pexels contributor (see page)",
+  "license": "Pexels License",
+  "licenseUrl": "https://www.pexels.com/license/"
+ },
+ {
+  "file": "caketoast-chocolate.jpg",
+  "subject": "Chocolate cake toast (stand-in: chocolate-covered biscotti)",
+  "source": "Pexels",
+  "page": "https://www.pexels.com/photo/chocolate-covered-biscotti-spilled-from-cup-33433970/",
+  "image": "https://images.pexels.com/photos/33433970/pexels-photo-33433970.jpeg",
+  "author": "Pexels contributor (see page)",
+  "license": "Pexels License",
+  "licenseUrl": "https://www.pexels.com/license/"
+ },
+ {
+  "file": "caketoast-tutti-frutti.jpg",
+  "subject": "Tutti Frutti cake toast (stand-in: \"Caramel Apple Biscotti\")",
+  "source": "Flickr (via Openverse)",
+  "page": "https://www.flickr.com/photos/25128194@N02/4121522578",
+  "image": "https://live.staticflickr.com/2582/4121522578_2b7bbc9bcd_b.jpg",
+  "author": "Vegan Feast Catering",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+ },
+ {
+  "file": "box-tasting.jpg",
+  "subject": "Tasting Box (stand-in: cupcakes with gift wrap)",
+  "source": "Pexels",
+  "page": "https://www.pexels.com/photo/cupcakes-and-a-present-on-a-white-surface-8014830/",
+  "image": "https://images.pexels.com/photos/8014830/pexels-photo-8014830.jpeg",
+  "author": "Pexels contributor (see page)",
+  "license": "Pexels License",
+  "licenseUrl": "https://www.pexels.com/license/"
+ },
+ {
+  "file": "box-chocolate-lovers.jpg",
+  "subject": "Chocolate Lover's Box – cookies and a chocolate cupcake",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/cookies-and-chocolate-muffin-on-black-textile-7E9sThEyDIg",
+  "image": "https://images.unsplash.com/photo-1515265705-cbcc6e6ba264",
+  "author": "Laura Gomez",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "box-chai-time.jpg",
+  "subject": "Chai Time Box – tea and cookies",
+  "source": "Pexels",
+  "page": "https://www.pexels.com/photo/cozy-tea-and-cookies-on-vintage-books-34967052/",
+  "image": "https://images.pexels.com/photos/34967052/pexels-photo-34967052.jpeg",
+  "author": "Tanha Tamanna Syed",
+  "license": "Pexels License",
+  "licenseUrl": "https://www.pexels.com/license/"
+ },
+ {
+  "file": "box-treat-for-two.jpg",
+  "subject": "Treat for Two – \"two cupcakes with icing on top on ceramic plates\" (photo credit myfriendscoffee.com)",
+  "source": "Flickr (via Openverse)",
+  "page": "https://www.flickr.com/photos/147592390@N06/46946134934",
+  "image": "https://live.staticflickr.com/65535/46946134934_b1a8818ebd_b.jpg",
+  "author": "John Beans",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+ },
+ {
+  "file": "box-family-weekend.jpg",
+  "subject": "Family Weekend Box – chocolate cupcakes with strawberries and cookies",
+  "source": "Unsplash",
+  "page": "https://unsplash.com/photos/chocolate-cupcakes-with-strawberries-and-cookies-bZb99nH5VoU",
+  "image": "https://images.unsplash.com/photo-1525640932057-b18561aca9b5",
+  "author": "Nik",
+  "license": "Unsplash License",
+  "licenseUrl": "https://unsplash.com/license"
+ },
+ {
+  "file": "box-gift-hamper.jpg",
+  "subject": "Gift Hamper (stand-in: \"Box of cupcakes\" tied with a ribbon)",
+  "source": "Flickr (via Openverse)",
+  "page": "https://www.flickr.com/photos/23215687@N04/3424087632",
+  "image": "https://live.staticflickr.com/3135/3424087632_a5d4c51bd4_b.jpg",
+  "author": "Suzanne's Bespoke Bakery",
+  "license": "CC BY 2.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/2.0/"
+ }
 ]

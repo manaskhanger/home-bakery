@@ -1,21 +1,23 @@
 /**
  * =====================================================================
- *  Home Bakery — Google Apps Script backend (bound to the order Sheet)
+ *  La Pâte Brillante — Google Apps Script backend (bound to the order Sheet)
  * =====================================================================
  *  API (same contract as the local mock server.js):
  *    POST body (Content-Type: text/plain) = JSON { action, ... }
  *      ping                                    -> { ok, mode }
  *      createOrder  { order:{name, phone, email, address, deliveryDate,
  *                    slot, distance, notes, items:[{id, qty, choices}]} }
- *                   distance = '3' (within 3 km) | '4'…'15' | 'unknown'
- *                                              -> { ok, orderId, subtotal, deliveryFee, deliveryFeeTbc,
+ *                   distance = 'within' (≤ 3 km) | 'beyond' (> 3 km) | 'unknown' (not sure)
+ *                                              -> { ok, orderId, subtotal, discount, deliveryFee, deliveryFeeTbc,
  *                                                   total, status, deliveryDate, slot }
+ *                   discount = launch offer (₹50 off a first order of ₹500+), decided here by
+ *                   scanning the Phone + Status columns (declined orders don't count)
  *      status       { orderId, phone }         -> { ok, order:{...public fields} }
  *      login        { password }               -> { ok }
  *      listOrders   { password, status? }      -> { ok, orders:[...] }
  *      updateStatus { password, orderId, status, note?, deliveryFee?, sendEmail? }
- *                   deliveryFee (₹, whole number) replaces the estimate and
- *                   recalculates the total; required to confirm a 'not sure' order
+ *                   deliveryFee (₹, whole number) replaces the fee and recalculates
+ *                   the total (subtotal − discount + fee); required to confirm a 'not sure' order
  *                                              -> { ok, order, emailSent, feeChanged }
  *    GET ?action=ping | ?action=status&orderId=..&phone=..  (read-only)
  *  Errors are always returned as HTTP 200 + { ok:false, error } because
@@ -23,8 +25,8 @@
  *
  *  Script Properties (Project Settings -> Script properties):
  *    ADMIN_PASSWORD   (required)  password for admin.html
- *    BAKERY_NAME      (optional)  default 'Your Bakery Name'
- *    WHATSAPP_DISPLAY (optional)  shown in emails, e.g. '+91 98765 43210'
+ *    BAKERY_NAME      (optional)  default 'La Pâte Brillante'
+ *    WHATSAPP_DISPLAY (optional)  shown in emails, default '+91 95999 09742'
  *    OWNER_EMAIL      (optional)  gets a copy of every new order + is the reply-to
  * =====================================================================
  */
@@ -36,43 +38,52 @@ var STATUSES = ['Pending', 'Confirmed', 'Declined'];
 
 // Keep in sync with config.js in the website.
 var RULES = {
-  minOrder: 250,            // items only, before delivery
+  minOrder: 250,            // items subtotal, before discount & delivery
   weekendsToShow: 2,
   cutoffHour: 15,           // orders close Thursday 3 pm IST for that Fri/Sat/Sun
   weekendSlots: ['Morning · 10am – 1pm', 'Afternoon · 1pm – 4pm', 'Evening · 4pm – 7pm'],
   fridaySlots: ['Evening · 6pm – 9pm'],   // Friday evening: cake-toast-only orders
-  delivery: { freeWithinKm: 3, freeFromOrder: 800, perKm: 10, maxKm: 15 }
+  // within 3 km: free · beyond: free from ₹800 (items subtotal before discount), else flat ₹60 · not sure: baker confirms
+  delivery: { freeWithinKm: 3, freeFromOrder: 800, flatBeyond: 60 },
+  // ₹50 off a customer's first order (no earlier non-declined order from that phone) of ₹500+; null = off
+  launchOffer: { amount: 50, minSubtotal: 500 }
 };
 
 // Prices are ALWAYS taken from here (never trusted from the browser).
 // Keep ids/prices in sync with config.js.
+// pick: flavour choices for boxes — 'required' | 'optional' (blank = Baker's choice) | 'none' (fixed box)
 var MENU = {
-  'ck-choco':    { name: 'Classic Choco-Chip', price: 70 },
-  'ck-nutella':  { name: 'Nutella-Stuffed',    price: 100 },
-  'ck-seasalt':  { name: 'Dark Choc Sea Salt', price: 90 },
-  'cc-redvelvet':{ name: 'Red Velvet',         price: 120 },
-  'cc-belgian':  { name: 'Belgian Chocolate',  price: 130 },
-  'cc-caramel':  { name: 'Salted Caramel',     price: 130 },
-  'ct-vanilla':  { name: 'Classic Vanilla Cake Toast', price: 130, fridayOk: true },
-  'ct-elaichi':  { name: 'Elaichi Cake Toast',           price: 140, fridayOk: true },
-  'ct-choco':    { name: 'Chocolate Cake Toast',       price: 150, fridayOk: true },
-  'ct-tutti':    { name: 'Tutti Frutti Cake Toast',    price: 140, fridayOk: true },
-  'bx-tasting':  { name: 'Tasting Box', price: 449, box: true },
-  'bx-cookie':   { name: 'Cookie Box',  price: 449, box: true },
-  'bx-cupcake':  { name: 'Cupcake Box', price: 469, box: true },
-  'bx-party':    { name: 'Party Box',   price: 599, box: true }
+  'ck-choco':       { name: 'Classic Choco-Chip',     price: 70 },
+  'ck-darkstuffed': { name: 'Dark Chocolate Stuffed', price: 100 },
+  'ck-seasalt':     { name: 'Dark Choc Sea Salt',     price: 90 },
+  'cc-redvelvet':   { name: 'Red Velvet',                price: 110 },
+  'cc-truffle':     { name: 'Belgian Chocolate Truffle', price: 130 },
+  'cc-strawberry':  { name: 'Strawberry Cream',          price: 120 },
+  'cc-box4':        { name: 'Cupcake Box of 4', price: 399, box: true, pick: 'required' },
+  'cc-box6':        { name: 'Cupcake Box of 6', price: 599, box: true, pick: 'required' },
+  'ct-vanilla':     { name: 'Classic Vanilla Cake Toast', price: 130, fridayOk: true },
+  'ct-elaichi':     { name: 'Elaichi Cake Toast',         price: 140, fridayOk: true },
+  'ct-choco':       { name: 'Chocolate Cake Toast',       price: 150, fridayOk: true },
+  'ct-tutti':       { name: 'Tutti Frutti Cake Toast',    price: 140, fridayOk: true },
+  'bx-tasting':     { name: 'Tasting Box',           price: 449, box: true, pick: 'optional' },
+  'bx-choclover':   { name: "Chocolate Lover's Box", price: 599, box: true, pick: 'none' },
+  'bx-chai':        { name: 'Chai Time Box',         price: 399, box: true, pick: 'optional' },
+  'bx-two':         { name: 'Treat for Two',         price: 349, box: true, pick: 'optional' },
+  'bx-family':      { name: 'Family Weekend Box',    price: 799, box: true, pick: 'optional' },
+  'bx-hamper':      { name: 'Gift Hamper',           price: 999, box: true, pick: 'optional' }
 };
+var BAKERS_CHOICE = "Baker's choice";
 
 var HEADERS = ['Order ID', 'Created At', 'Name', 'Phone', 'Email', 'Address', 'Delivery Date', 'Slot',
-  'Items JSON', 'Items Summary', 'Subtotal (₹)', 'Distance', 'Delivery Fee (₹)', 'Total (₹)', 'Notes', 'Status', 'Admin Note', 'Updated At', 'Last Emailed Status'];
+  'Items JSON', 'Items Summary', 'Subtotal (₹)', 'Discount (₹)', 'Distance', 'Delivery Fee (₹)', 'Total (₹)', 'Notes', 'Status', 'Admin Note', 'Updated At', 'Last Emailed Status'];
 var COL = {}; HEADERS.forEach(function (h, i) { COL[h] = i + 1; });
 
 function props_() { return PropertiesService.getScriptProperties(); }
 function cfg_() {
   var p = props_();
   return {
-    bakeryName: p.getProperty('BAKERY_NAME') || 'Your Bakery Name',
-    whatsappDisplay: p.getProperty('WHATSAPP_DISPLAY') || '+91 [YOUR NUMBER]',
+    bakeryName: p.getProperty('BAKERY_NAME') || 'La Pâte Brillante',
+    whatsappDisplay: p.getProperty('WHATSAPP_DISPLAY') || '+91 95999 09742',
     ownerEmail: p.getProperty('OWNER_EMAIL') || ''
   };
 }
@@ -142,27 +153,41 @@ function availableDates_(cakeToastOnly) {
   }
   return out;
 }
-/** Delivery: free within freeWithinKm; beyond that free from freeFromOrder, else perKm per km past freeWithinKm. */
+/** Delivery: 'within' freeWithinKm is free; 'beyond' is free from freeFromOrder (items subtotal before
+    discount), otherwise flatBeyond; 'unknown' (not sure) is free from freeFromOrder, otherwise TBC. */
 function distanceLabel_(v) {
-  var d = RULES.delivery; v = String(v);
-  if (v === 'unknown') return 'More than ' + d.maxKm + ' km / not sure';
-  var k = parseInt(v, 10);
-  if (String(k) !== v || k < d.freeWithinKm || k > d.maxKm) return '';
-  return k === d.freeWithinKm ? 'Within ' + k + ' km' : k + ' km';
+  var d = RULES.delivery;
+  return { within: 'Within ' + d.freeWithinKm + ' km', beyond: 'Beyond ' + d.freeWithinKm + ' km', unknown: 'Not sure' }[String(v)] || '';
 }
 function distanceFromLabel_(label) {
   label = String(label || '');
-  var m = label.match(/^(?:Within )?(\d+) km$/);
-  return m ? m[1] : (label ? 'unknown' : '');
+  if (!label) return '';
+  if (/^Within/i.test(label)) return 'within';
+  if (/^Beyond/i.test(label) || /^\d+ km$/.test(label)) return 'beyond';
+  return 'unknown';
 }
 function deliveryFee_(subtotal, distance) {
-  var d = RULES.delivery;
+  var d = RULES.delivery; distance = String(distance);
   if (!distanceLabel_(distance)) return { valid: false };
-  if (subtotal >= d.freeFromOrder) return { valid: true, fee: 0, tbc: false };
-  if (String(distance) === 'unknown') return { valid: true, fee: null, tbc: true };
-  var km = parseInt(distance, 10);
-  return { valid: true, fee: km <= d.freeWithinKm ? 0 : (km - d.freeWithinKm) * d.perKm, tbc: false };
+  if (distance === 'within' || subtotal >= d.freeFromOrder) return { valid: true, fee: 0, tbc: false };
+  if (distance === 'unknown') return { valid: true, fee: null, tbc: true };
+  return { valid: true, fee: d.flatBeyond, tbc: false };
 }
+function offerAmount_(subtotal) {
+  var o = RULES.launchOffer;
+  return o && o.amount > 0 && subtotal >= o.minSubtotal ? o.amount : 0;
+}
+/** True if the Sheet already has an order from this phone that wasn't declined. */
+function hasPriorOrder_(sh, phone) {
+  var last = sh.getLastRow(); if (last < 2) return false;
+  var phones = sh.getRange(2, COL['Phone'], last - 1, 1).getValues();
+  var statuses = sh.getRange(2, COL['Status'], last - 1, 1).getValues();
+  for (var i = 0; i < phones.length; i++) {
+    if (String(phones[i][0]).replace(/\D/g, '').slice(-10) === phone && String(statuses[i][0]) !== 'Declined') return true;
+  }
+  return false;
+}
+function total_(subtotal, discount, fee) { return (Number(subtotal) || 0) - (Number(discount) || 0) + (Number(fee) || 0); }
 function feeText_(o) { return o.deliveryFeeTbc ? 'To be confirmed' : (Number(o.deliveryFee) === 0 ? 'Free' : '₹' + o.deliveryFee); }
 function parseFee_(v) {
   if (v === undefined || v === null || String(v).trim() === '') return undefined;
@@ -187,8 +212,10 @@ function priceItems_(items) {
     var m = MENU[raw && raw.id], qty = parseInt(raw && raw.qty, 10);
     if (!m) { errors.push('Unknown item: ' + (raw && raw.id)); return; }
     if (!(qty >= 1 && qty <= 50)) { errors.push('Invalid quantity for ' + m.name); return; }
-    var choices = m.box ? clean_(raw.choices, 200) : '';
-    if (m.box && !choices) errors.push('Please add flavour choices for your ' + m.name + '.');
+    var pick = m.box ? (m.pick || 'required') : 'none';
+    var choices = pick !== 'none' ? clean_(raw.choices, 200) : '';
+    if (pick === 'required' && !choices) errors.push('Please add flavour choices for your ' + m.name + '.');
+    if (pick === 'optional' && !choices) choices = BAKERS_CHOICE;
     var lineTotal = m.price * qty; total += lineTotal;
     lines.push({ id: raw.id, name: m.name, qty: qty, price: m.price, lineTotal: lineTotal, choices: choices, fridayOk: !!m.fridayOk });
   });
@@ -208,7 +235,7 @@ function sheet_() {
   return sh;
 }
 function formatSheet_(sh) {
-  sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold').setBackground('#3b2019').setFontColor('#fbf3ea');
+  sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold').setBackground('#1d332d').setFontColor('#f8f4ec');
   sh.setFrozenRows(1);
   // Keep phone numbers, IDs and dates as plain text
   ['Order ID', 'Phone', 'Delivery Date'].forEach(function (h) { sh.getRange(2, COL[h], sh.getMaxRows() - 1, 1).setNumberFormat('@'); });
@@ -216,6 +243,7 @@ function formatSheet_(sh) {
   sh.getRange(2, COL['Updated At'], sh.getMaxRows() - 1, 1).setNumberFormat('dd MMM yyyy, h:mm am/pm');
   // Delivery Fee holds a number, or the text TBC when the customer wasn't sure of the distance
   sh.getRange(1, COL['Delivery Fee (₹)']).setNote('Number in ₹, or TBC. Editing it here recalculates Total (installable trigger).');
+  sh.getRange(1, COL['Discount (₹)']).setNote('Launch offer (first order). Total = Subtotal − Discount + Delivery Fee.');
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).setAllowInvalid(false).build();
   sh.getRange(2, COL['Status'], sh.getMaxRows() - 1, 1).setDataValidation(rule);
   sh.setColumnWidth(COL['Items JSON'], 120);
@@ -233,7 +261,7 @@ function rowToOrder_(r) {
     email: String(r[COL['Email'] - 1]), address: String(r[COL['Address'] - 1]),
     deliveryDate: toYmd_(r[COL['Delivery Date'] - 1]), slot: String(r[COL['Slot'] - 1]),
     items: items, summary: String(r[COL['Items Summary'] - 1]),
-    subtotal: Number(r[COL['Subtotal (₹)'] - 1]) || 0,
+    subtotal: Number(r[COL['Subtotal (₹)'] - 1]) || 0, discount: Number(r[COL['Discount (₹)'] - 1]) || 0,
     distanceLabel: String(r[COL['Distance'] - 1] || ''), distance: distanceFromLabel_(r[COL['Distance'] - 1]),
     deliveryFee: feeCell_(r[COL['Delivery Fee (₹)'] - 1]), deliveryFeeTbc: feeCell_(r[COL['Delivery Fee (₹)'] - 1]) === null,
     total: Number(r[COL['Total (₹)'] - 1]) || 0,
@@ -283,7 +311,7 @@ function createOrder_(p) {
   var slots = d && d.kind === 'friday' ? RULES.fridaySlots : RULES.weekendSlots;
   if (d && slots.indexOf(o.slot) === -1) errors.push('Please pick a delivery slot.');
   var fee = deliveryFee_(priced.total, o.distance);
-  if (!fee.valid) errors.push('Please choose your approximate distance from us.');
+  if (!fee.valid) errors.push('Please choose within or beyond 3 km (or not sure).');
   if (errors.length) return { ok: false, error: errors[0], errors: errors };
 
   var lines = priced.lines.map(function (l) { return { id: l.id, name: l.name, qty: l.qty, price: l.price, lineTotal: l.lineTotal, choices: l.choices }; });
@@ -293,10 +321,12 @@ function createOrder_(p) {
   try {
     var sh = sheet_();
     var id = newOrderId_(sh);
+    var potential = offerAmount_(priced.total);
+    var discount = potential && !hasPriorOrder_(sh, phone) ? potential : 0;
     order = { orderId: id, createdAt: now.toISOString(), name: name, phone: phone, email: email, address: address,
       deliveryDate: o.deliveryDate, deliveryKind: d.kind, slot: o.slot, items: lines, summary: summarize_(lines),
-      subtotal: priced.total, distance: String(o.distance), distanceLabel: distanceLabel_(o.distance),
-      deliveryFee: fee.fee, deliveryFeeTbc: fee.tbc, total: priced.total + (fee.fee || 0),
+      subtotal: priced.total, discount: discount, distance: String(o.distance), distanceLabel: distanceLabel_(o.distance),
+      deliveryFee: fee.fee, deliveryFeeTbc: fee.tbc, total: total_(priced.total, discount, fee.fee),
       notes: notes, status: 'Pending', adminNote: '', updatedAt: now.toISOString(), lastEmailedStatus: '' };
     var row = new Array(HEADERS.length);
     row[COL['Order ID'] - 1] = id;
@@ -310,6 +340,7 @@ function createOrder_(p) {
     row[COL['Items JSON'] - 1] = JSON.stringify(lines);
     row[COL['Items Summary'] - 1] = safeCell_(order.summary);
     row[COL['Subtotal (₹)'] - 1] = order.subtotal;
+    row[COL['Discount (₹)'] - 1] = order.discount;
     row[COL['Distance'] - 1] = order.distanceLabel;
     row[COL['Delivery Fee (₹)'] - 1] = order.deliveryFeeTbc ? 'TBC' : order.deliveryFee;
     row[COL['Total (₹)'] - 1] = order.total;
@@ -325,7 +356,7 @@ function createOrder_(p) {
   }
   sendMail_('received', order);
   notifyOwner_(order);
-  return { ok: true, orderId: order.orderId, subtotal: order.subtotal, deliveryFee: order.deliveryFee, deliveryFeeTbc: order.deliveryFeeTbc,
+  return { ok: true, orderId: order.orderId, subtotal: order.subtotal, discount: order.discount, deliveryFee: order.deliveryFee, deliveryFeeTbc: order.deliveryFeeTbc,
     total: order.total, status: order.status, deliveryDate: order.deliveryDate, slot: order.slot };
 }
 
@@ -339,7 +370,7 @@ function status_(p) {
   if (o.phone !== phone) return notFound;
   return { ok: true, order: {
     orderId: o.orderId, firstName: o.name.split(' ')[0], status: o.status, deliveryDate: o.deliveryDate, slot: o.slot,
-    summary: o.summary, items: o.items, subtotal: o.subtotal, distanceLabel: o.distanceLabel, deliveryFee: o.deliveryFee,
+    summary: o.summary, items: o.items, subtotal: o.subtotal, discount: o.discount, distanceLabel: o.distanceLabel, deliveryFee: o.deliveryFee,
     deliveryFeeTbc: o.deliveryFeeTbc, total: o.total, adminNote: o.adminNote, createdAt: o.createdAt, updatedAt: o.updatedAt } };
 }
 
@@ -381,7 +412,7 @@ function updateStatus_(p) {
     if (fee !== undefined) {
       feeChanged = cur.deliveryFeeTbc || fee !== cur.deliveryFee;
       sh.getRange(row, COL['Delivery Fee (₹)']).setValue(fee);
-      sh.getRange(row, COL['Total (₹)']).setValue(cur.subtotal + fee);
+      sh.getRange(row, COL['Total (₹)']).setValue(total_(cur.subtotal, cur.discount, fee));
     }
     sh.getRange(row, COL['Status']).setValue(p.status);
     if (typeof p.note === 'string') sh.getRange(row, COL['Admin Note']).setValue(safeCell_(clean_(p.note, 500)));
@@ -407,13 +438,13 @@ function onStatusEdit(e) {
   var sh = e.range.getSheet();
   if (sh.getName() !== SHEET_NAME) return;
   var c1 = e.range.getColumn(), c2 = e.range.getLastColumn();
-  var feeCol = COL['Delivery Fee (₹)'];
-  var touchesFee = feeCol >= c1 && feeCol <= c2, touchesStatus = COL['Status'] >= c1 && COL['Status'] <= c2;
+  var feeCol = COL['Delivery Fee (₹)'], discCol = COL['Discount (₹)'];
+  var touchesFee = (feeCol >= c1 && feeCol <= c2) || (discCol >= c1 && discCol <= c2), touchesStatus = COL['Status'] >= c1 && COL['Status'] <= c2;
   if (!touchesFee && !touchesStatus) return;
   for (var row = Math.max(2, e.range.getRow()); row <= e.range.getLastRow(); row++) {
-    if (touchesFee) { // keep Total = Subtotal + Delivery Fee when the fee is typed in by hand
+    if (touchesFee) { // keep Total = Subtotal − Discount + Delivery Fee when the fee/discount is typed in by hand
       var f = feeCell_(sh.getRange(row, feeCol).getValue());
-      sh.getRange(row, COL['Total (₹)']).setValue((Number(sh.getRange(row, COL['Subtotal (₹)']).getValue()) || 0) + (f || 0));
+      sh.getRange(row, COL['Total (₹)']).setValue(total_(sh.getRange(row, COL['Subtotal (₹)']).getValue(), sh.getRange(row, discCol).getValue(), f));
       if (!touchesStatus) continue;
     }
     var o = readOrder_(sh, row);
@@ -466,24 +497,26 @@ function buildEmail_(kind, o) {
     intro = 'Hi ' + o.name + ", we're really sorry — we can't take your order this time.";
   }
   var note = o.adminNote && kind !== 'received' ? 'Note from us: ' + o.adminNote : '';
-  var estimate = kind === 'received' && !o.deliveryFeeTbc && o.deliveryFee > 0 ? ' (estimate — we confirm it with your order)' : '';
+  var estimate = kind === 'received' && !o.deliveryFeeTbc && o.deliveryFee > 0 ? ' (for the distance you picked — we confirm it with your order)' : '';
+  var discLine = Number(o.discount) > 0 ? 'Launch offer (first order): −₹' + o.discount : '';
   var feeLine = 'Delivery (' + o.distanceLabel + '): ' + feeText_(o) + estimate;
   var totalTxt = '₹' + o.total + (o.deliveryFeeTbc ? ' + delivery' : '');
   var body = [intro].concat(note ? [note] : [], ['', 'Order ID: ' + o.orderId, 'Delivery: ' + when, 'Address: ' + o.address, '',
-    o.summary, '', 'Subtotal: ₹' + o.subtotal, feeLine, 'Total: ' + totalTxt, '', '— ' + c.bakeryName]).join('\n');
+    o.summary, '', 'Subtotal: ₹' + o.subtotal].concat(discLine ? [discLine] : [], [feeLine, 'Total: ' + totalTxt, '', '— ' + c.bakeryName])).join('\n');
   var itemsHtml = (o.items || []).map(function (l) {
-    return '<tr><td style="padding:4px 0">' + l.qty + ' × ' + esc_(l.name) + (l.choices ? '<br><small style="color:#8a6f64">' + esc_(l.choices) + '</small>' : '') +
+    return '<tr><td style="padding:4px 0">' + l.qty + ' × ' + esc_(l.name) + (l.choices ? '<br><small style="color:#6b685b">' + esc_(l.choices) + '</small>' : '') +
       '</td><td style="text-align:right">₹' + l.lineTotal + '</td></tr>';
   }).join('');
-  var htmlBody = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#3b2018;background:#fbf4ec;padding:24px;border-radius:16px">' +
+  var htmlBody = '<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1d332d;background:#f8f4ec;padding:24px;border-radius:16px">' +
     '<h2 style="font-family:Georgia,serif;margin:0 0 4px">' + esc_(c.bakeryName) + '</h2><p>' + esc_(intro) + '</p>' +
-    (note ? '<p style="background:#f6dcd4;padding:10px 14px;border-radius:10px">' + esc_(note) + '</p>' : '') +
+    (note ? '<p style="background:#efe6d8;padding:10px 14px;border-radius:10px">' + esc_(note) + '</p>' : '') +
     '<p><b>Order ID:</b> ' + esc_(o.orderId) + '<br><b>Delivery:</b> ' + esc_(when) + '<br><b>Address:</b> ' + esc_(o.address) + '</p>' +
     '<table style="width:100%;border-collapse:collapse">' + itemsHtml +
-    '<tr><td style="border-top:1px solid #e6d3c7;padding-top:6px">Subtotal</td><td style="border-top:1px solid #e6d3c7;text-align:right">₹' + o.subtotal + '</td></tr>' +
-    '<tr><td>Delivery <small style="color:#8a6f64">(' + esc_(o.distanceLabel) + ')</small>' + (estimate ? '<br><small style="color:#8a6f64">estimate — confirmed with your order</small>' : '') + '</td><td style="text-align:right">' + esc_(feeText_(o)) + '</td></tr>' +
+    '<tr><td style="border-top:1px solid #d9c49b;padding-top:6px">Subtotal</td><td style="border-top:1px solid #d9c49b;text-align:right">₹' + o.subtotal + '</td></tr>' +
+    (discLine ? '<tr><td style="color:#3f6b4f">Launch offer <small style="color:#6b685b">(first order)</small></td><td style="text-align:right;color:#3f6b4f">−₹' + o.discount + '</td></tr>' : '') +
+    '<tr><td>Delivery <small style="color:#6b685b">(' + esc_(o.distanceLabel) + ')</small>' + (estimate ? '<br><small style="color:#6b685b">confirmed with your order</small>' : '') + '</td><td style="text-align:right">' + esc_(feeText_(o)) + '</td></tr>' +
     '<tr><td style="padding-top:6px"><b>Total</b></td><td style="text-align:right;padding-top:6px"><b>' + esc_(totalTxt) + '</b></td></tr></table>' +
-    '<p style="color:#8a6f64;font-size:13px">Questions? WhatsApp ' + esc_(c.whatsappDisplay) + '</p></div>';
+    '<p style="color:#6b685b;font-size:13px">Questions? WhatsApp ' + esc_(c.whatsappDisplay) + '</p></div>';
   return { to: o.email, subject: subject, body: body, htmlBody: htmlBody };
 }
 
@@ -506,6 +539,6 @@ function notifyOwner_(o) {
   try {
     MailApp.sendEmail({ to: c.ownerEmail, name: c.bakeryName, subject: '🧁 New order ' + o.orderId + ' — ₹' + o.total + ' for ' + formatDate_(o.deliveryDate),
       body: [o.name + ' · +91 ' + o.phone + ' · ' + o.email, o.address, 'Delivery: ' + formatDate_(o.deliveryDate) + ', ' + o.slot, '', o.summary,
-        'Subtotal: ₹' + o.subtotal, 'Delivery (' + o.distanceLabel + '): ' + feeText_(o), 'Total: ₹' + o.total, o.notes ? '\nNotes: ' + o.notes : '', '\nOpen admin.html to confirm or decline.'].join('\n') });
+        'Subtotal: ₹' + o.subtotal + (Number(o.discount) > 0 ? '  (launch offer −₹' + o.discount + ')' : ''), 'Delivery (' + o.distanceLabel + '): ' + feeText_(o), 'Total: ₹' + o.total, o.notes ? '\nNotes: ' + o.notes : '', '\nOpen admin.html to confirm or decline.'].join('\n') });
   } catch (err) { console.error('Owner email failed: ' + err); }
 }

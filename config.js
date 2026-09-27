@@ -4,10 +4,11 @@
    ===================================================================== */
 window.BAKERY_CONFIG = {
   // ---- Brand ---------------------------------------------------------
-  bakeryName: 'Your Bakery Name',
+  bakeryName: 'La Pâte Brillante',
   headline: 'A little luxury, every weekend.',
-  tagline: 'Small batches, baked fresh in our home kitchen',
+  tagline: 'Small batches, baked fresh in a home kitchen',
   eyebrow: 'Weekend bakes · Made to order',
+  logo: 'images/logo.png',   // round logo used in the header, favicon & share image
 
   // ---- Photos ----------------------------------------------------------
   // To use your own photos, just replace the files in /images with the SAME
@@ -17,15 +18,13 @@ window.BAKERY_CONFIG = {
 
   // ---- Contact -------------------------------------------------------
   // Digits only, WITH country code (91 for India), e.g. '919876543210'
-  whatsappNumber: '91XXXXXXXXXX',
+  whatsappNumber: '919599909742',
   // How the number is shown on the site
-  whatsappDisplay: '+91 [YOUR NUMBER]',
-  // Instagram handle without the @
-  instagramHandle: 'yourhandle',
-  // Where you bake from — shown next to the delivery-distance question
-  kitchenArea: '[YOUR AREA]',
-  // Food licence number shown in the footer
-  fssaiNumber: '[YOUR NUMBER]',
+  whatsappDisplay: '+91 95999 09742',
+  // Instagram handle without the @ — leave '' to hide all Instagram links
+  instagramHandle: '',
+  // Food licence (FSSAI) number — leave '' to hide it from the footer
+  fssaiNumber: '',
 
   // ---- Backend -------------------------------------------------------
   // 'demo'   -> no backend: orders are saved in the visitor's browser
@@ -42,37 +41,50 @@ window.BAKERY_CONFIG = {
   // ---- Ordering rules -------------------------------------------------
   // (Keep these in sync with apps-script/Code.gs if you change them.)
   currency: '₹',
-  minOrder: 250,            // minimum order value in ₹ (items only, before delivery)
+  minOrder: 250,            // minimum order in ₹ (items subtotal, before discount & delivery)
   weekendsToShow: 2,        // how many upcoming weekends customers can pick
   cutoffHour: 15,           // orders close THURSDAY at this hour, India time (15 = 3 pm)
   weekendSlots: ['Morning · 10am – 1pm', 'Afternoon · 1pm – 4pm', 'Evening · 4pm – 7pm'],  // Sat & Sun, whole menu
   fridaySlots: ['Evening · 6pm – 9pm'],                                                    // Friday: cake toast only
 
   // ---- Delivery charges -------------------------------------------------
-  // Up to freeWithinKm: free on every order. Beyond that: free if the order
-  // is freeFromOrder or more, otherwise perKm for each km past freeWithinKm.
-  // Customers pick an approximate distance (up to maxKm, or "not sure" =
-  // you confirm the fee in the admin page before confirming the order).
-  delivery: { freeWithinKm: 3, freeFromOrder: 800, perKm: 10, maxKm: 15 },
+  // Customers pick "Within 3 km", "Beyond 3 km" or "Not sure".
+  //  - within freeWithinKm: free on every order
+  //  - beyond: free if the items subtotal (before any discount) is
+  //    freeFromOrder or more, otherwise a flat flatBeyond fee
+  //  - not sure: free from freeFromOrder, otherwise you confirm the fee in
+  //    the admin page before confirming the order
+  delivery: { freeWithinKm: 3, freeFromOrder: 800, flatBeyond: 60 },
+
+  // ---- Launch offer -------------------------------------------------------
+  // amount off a customer's FIRST order (first order = no earlier order from
+  // that phone number, declined orders don't count) when the items subtotal
+  // is minSubtotal or more. Set to null to switch the offer off.
+  launchOffer: { amount: 50, minSubtotal: 500 },
 
   // ---- Menu ------------------------------------------------------------
   // id must be unique and must match MENU in apps-script/Code.gs.
   // cartName (optional) is how the item appears in the cart, emails & admin.
+  // Boxes: box:true + pick: 'required' (customer must list flavours),
+  // 'optional' (blank = baker's choice) or 'none' (fixed contents).
   menu: [
     {
       id: 'cookies', title: 'Cookies', icon: '🍪', note: '₹70 – ₹100 each', style: 'card',
       items: [
-        { id: 'ck-choco',   name: 'Classic Choco-Chip', price: 70,  desc: 'Chewy brown-butter dough loaded with chocolate chips', image: 'images/cookie-choco-chip.jpg' },
-        { id: 'ck-nutella', name: 'Nutella-Stuffed',    price: 100, desc: 'A molten Nutella centre in every bite', image: 'images/cookie-nutella-stuffed.jpg' },
-        { id: 'ck-seasalt', name: 'Dark Choc Sea Salt', price: 90,  desc: 'Rich dark chocolate finished with flaky sea salt', image: 'images/cookie-dark-choc-sea-salt.jpg' }
+        { id: 'ck-choco',       name: 'Classic Choco-Chip',     price: 70,  desc: 'Chewy brown-butter dough loaded with chocolate chips', image: 'images/cookie-choco-chip.jpg' },
+        { id: 'ck-darkstuffed', name: 'Dark Chocolate Stuffed', price: 100, desc: 'A molten dark chocolate centre in every bite', image: 'images/cookie-dark-chocolate-stuffed.jpg' },
+        { id: 'ck-seasalt',     name: 'Dark Choc Sea Salt',     price: 90,  desc: 'Rich dark chocolate finished with flaky sea salt', image: 'images/cookie-dark-choc-sea-salt.jpg' }
       ]
     },
     {
-      id: 'cupcakes', title: 'Cupcakes', icon: '🧁', note: '₹120 – ₹130 each', style: 'card',
+      id: 'cupcakes', title: 'Cupcakes', icon: '🧁', note: '₹110 – ₹130 each', style: 'card',
+      boxesTitle: 'Cupcake boxes · mix flavours',   // heading for the box items below
       items: [
-        { id: 'cc-redvelvet', name: 'Red Velvet',        price: 120, desc: 'Soft cocoa sponge with cream cheese frosting', image: 'images/cupcake-red-velvet.jpg' },
-        { id: 'cc-belgian',   name: 'Belgian Chocolate', price: 130, desc: 'Deep chocolate cake, silky ganache swirl', image: 'images/cupcake-belgian-chocolate.jpg' },
-        { id: 'cc-caramel',   name: 'Salted Caramel',    price: 130, desc: 'Vanilla sponge, caramel core, salted caramel drizzle', image: 'images/cupcake-salted-caramel.jpg' }
+        { id: 'cc-redvelvet', name: 'Red Velvet',               price: 110, desc: 'Soft cocoa sponge with cream cheese frosting', image: 'images/cupcake-red-velvet.jpg' },
+        { id: 'cc-truffle',   name: 'Belgian Chocolate Truffle', price: 130, desc: 'Dark chocolate sponge, silky Belgian chocolate ganache', image: 'images/cupcake-belgian-truffle.jpg' },
+        { id: 'cc-strawberry', name: 'Strawberry Cream',        price: 120, desc: 'Fluffy vanilla sponge swirled with real strawberry cream', image: 'images/cupcake-strawberry-cream.jpg' },
+        { id: 'cc-box4', name: 'Box of 4', cartName: 'Cupcake Box of 4', price: 399, box: true, pick: 'required', contents: ['Any 4 cupcakes'], desc: 'Any 4 cupcakes, mix flavours', hint: 'e.g. 2 Red Velvet, 2 Strawberry Cream', image: 'images/cupcake-box-4.jpg' },
+        { id: 'cc-box6', name: 'Box of 6', cartName: 'Cupcake Box of 6', price: 599, box: true, pick: 'required', contents: ['Any 6 cupcakes'], desc: 'Any 6 cupcakes, mix flavours', hint: 'e.g. 2 of each flavour', image: 'images/cupcake-box-6.jpg' }
       ]
     },
     {
@@ -88,10 +100,12 @@ window.BAKERY_CONFIG = {
     {
       id: 'boxes', title: 'Boxes & Combos', icon: '🎁', note: 'Save more · Perfect for gifting', style: 'boxes',
       items: [
-        { id: 'bx-tasting', name: 'Tasting Box', price: 449, box: true, featured: true, badge: 'Best value · Try all', contents: ['2 cookies', '2 cupcakes', '1 cake toast pack'], desc: '2 cookies, 2 cupcakes & 1 cake toast pack', hint: 'e.g. Nutella + Sea Salt cookies, Red Velvet + Caramel, Elaichi toast', image: 'images/box-tasting.jpg' },
-        { id: 'bx-cookie',  name: 'Cookie Box',  price: 449, box: true, badge: 'Mix flavours',    contents: ['Any 6 cookies'],   desc: 'Any 6 cookies', hint: 'e.g. 2 Choco-Chip, 2 Nutella, 2 Sea Salt', image: 'images/box-cookie.jpg' },
-        { id: 'bx-cupcake', name: 'Cupcake Box', price: 469, box: true, badge: 'For sharing',     contents: ['Any 4 cupcakes'],  desc: 'Any 4 cupcakes', hint: 'e.g. 2 Red Velvet, 2 Salted Caramel', image: 'images/box-cupcake.jpg' },
-        { id: 'bx-party',   name: 'Party Box',   price: 599, box: true, badge: 'For a gathering', contents: ['Any 6 cupcakes'],  desc: 'Any 6 cupcakes', hint: 'e.g. 3 Belgian Chocolate, 3 Red Velvet', image: 'images/box-party.jpg' }
+        { id: 'bx-tasting',  name: 'Tasting Box',           price: 449, box: true, pick: 'optional', featured: true, badge: 'Best value · Try all', contents: ['2 cookies', '2 cupcakes', '1 cake toast pack'], desc: '2 cookies, 2 cupcakes & 1 cake toast pack', hint: 'e.g. Choco-Chip + Sea Salt cookies, Red Velvet + Strawberry, Elaichi toast', image: 'images/box-tasting.jpg' },
+        { id: 'bx-choclover', name: "Chocolate Lover's Box", price: 599, box: true, pick: 'none', badge: 'For chocolate lovers', contents: ['2 Belgian Chocolate Truffle cupcakes', '2 Dark Chocolate Stuffed cookies', '2 Dark Choc Sea Salt cookies'], desc: '2 Belgian Chocolate Truffle cupcakes, 2 Dark Chocolate Stuffed & 2 Dark Choc Sea Salt cookies', image: 'images/box-chocolate-lovers.jpg' },
+        { id: 'bx-chai',     name: 'Chai Time Box',         price: 399, box: true, pick: 'optional', badge: 'With chai', contents: ['1 cake toast', '4 cookies'], desc: '1 cake toast & 4 cookies', hint: 'e.g. Elaichi toast, 2 Choco-Chip, 2 Sea Salt', image: 'images/box-chai-time.jpg' },
+        { id: 'bx-two',      name: 'Treat for Two',         price: 349, box: true, pick: 'optional', badge: 'For two', contents: ['2 cupcakes', '2 cookies'], desc: '2 cupcakes & 2 cookies', hint: 'e.g. 2 Red Velvet, 2 Dark Chocolate Stuffed', image: 'images/box-treat-for-two.jpg' },
+        { id: 'bx-family',   name: 'Family Weekend Box',    price: 799, box: true, pick: 'optional', badge: 'For the family', contents: ['6 cookies', '4 cupcakes', '1 cake toast'], desc: '6 cookies, 4 cupcakes & 1 cake toast', hint: 'e.g. 2 of each cookie, 2 Red Velvet, 2 Strawberry, Vanilla toast', image: 'images/box-family-weekend.jpg' },
+        { id: 'bx-hamper',   name: 'Gift Hamper',           price: 999, box: true, pick: 'optional', badge: 'For gifting', contents: ['6 cookies', '4 cupcakes', '2 cake toast', 'Ribbon-tied box & thank-you card'], desc: '6 cookies, 4 cupcakes, 2 cake toast, ribbon-tied box & thank-you card', hint: 'Flavours, and who it’s for / a card message', image: 'images/box-gift-hamper.jpg' }
       ]
     }
   ]

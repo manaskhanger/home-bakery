@@ -4,7 +4,7 @@ The website is static (HTML/CSS/JS). Orders go to a Google Sheet through a tiny
 Google Apps Script "web app". No server to rent, no monthly cost.
 
 ## 1. Create the order Sheet
-1. Go to <https://sheets.new> and name the file, e.g. **Bakery Orders**.
+1. Go to <https://sheets.new> and name the file, e.g. **La Pâte Brillante – Orders**.
 2. Leave it empty – the script creates an **Orders** tab with the right columns.
 
 ## 2. Paste the script
@@ -21,8 +21,8 @@ Google Apps Script "web app". No server to rent, no monthly cost.
 | Property | Value | Required |
 |---|---|---|
 | `ADMIN_PASSWORD` | a long password only you know (used on `admin.html`) | ✅ |
-| `BAKERY_NAME` | e.g. `Sugar & Spice Home Bakery` (used in emails) | optional |
-| `WHATSAPP_DISPLAY` | e.g. `+91 98765 43210` (shown in emails) | optional |
+| `BAKERY_NAME` | defaults to `La Pâte Brillante` (used in emails) | optional |
+| `WHATSAPP_DISPLAY` | defaults to `+91 95999 09742` (shown in emails) | optional |
 | `OWNER_EMAIL` | your email – gets a copy of every new order; also the reply-to | optional |
 
 ## 4. Run setup once
@@ -47,8 +47,9 @@ In `config.js` (the hosted demo uses `MODE: 'demo'`; switch it to `'google'`):
 MODE: 'google',
 API_URLS: { local: '/api', google: 'https://script.google.com/macros/s/XXXX/exec' },
 ```
-Also set `bakeryName`, `whatsappNumber` (digits with 91, e.g. `919876543210`),
-`whatsappDisplay` and `instagramHandle`.
+`bakeryName` (La Pâte Brillante), `whatsappNumber` (`919599909742`) and `whatsappDisplay`
+are already set. When you have them, fill in `instagramHandle` and `fssaiNumber` – while
+they are `''` the Instagram link and the FSSAI line stay hidden.
 
 **CORS note:** the site sends every request as `POST` with
 `Content-Type: text/plain`, which the browser treats as a "simple" request – no CORS
@@ -74,16 +75,24 @@ pre-flight, so it works with Apps Script out of the box. Don't change it to
 
 ## Day-to-day
 - Use `admin.html` on your phone, or edit the **Status** column directly in the Sheet.
-- **Delivery fees:** orders where the customer chose "not sure" show `TBC` in the
-  **Delivery Fee (₹)** column. In `admin.html` type the fee (0 for free) and press
+- **Delivery fees:** within 3 km is free; beyond 3 km is free from ₹800 (items subtotal
+  before discount), otherwise ₹60. Orders where the customer chose "not sure" (and are under
+  ₹800) show `TBC` in the **Delivery Fee (₹)** column. In `admin.html` type the fee (0 for free) and press
   **Confirm** – the total is recalculated and goes into the confirmation email. You can
-  also adjust any estimated fee and press **Save**. If you type a fee straight into
-  the Sheet, the installed trigger recalculates **Total (₹)** for you.
+  also adjust any fee and press **Save**. If you type a fee (or discount) straight into
+  the Sheet, the installed trigger recalculates **Total (₹)** = Subtotal − Discount + Delivery Fee.
+- **Launch offer:** ₹50 off a customer's first order of ₹500+ (items subtotal). The script
+  checks the **Phone** and **Status** columns: if that phone already has an order that isn't
+  *Declined*, no discount. The amount given is stored in the **Discount (₹)** column and
+  shown in the emails, admin page, WhatsApp message and status page. Change or switch it
+  off with `launchOffer` in `RULES` (and `config.js`); `null` = off.
 - Changing prices/menu? Edit `config.js` **and** the `MENU`/`RULES` block in `Code.gs`
   (the server re-checks prices), then redeploy (step 5 note). `node server.js` warns you
   if the two files disagree.
 - **Upgrading from an earlier version of this script?** The Orders sheet gained
-  `Subtotal (₹)`, `Distance` and `Delivery Fee (₹)` columns. Rename the old tab (e.g.
+  `Subtotal (₹)`, `Discount (₹)`, `Distance` and `Delivery Fee (₹)` columns (Discount is new
+  in the La Pâte Brillante menu update, and the Distance values are now *Within 3 km /
+  Beyond 3 km / Not sure*). Rename the old tab (e.g.
   *Orders (old)*) and run `setup()` again to create a fresh Orders tab with the new
   columns, then redeploy (Deploy → Manage deployments → New version).
 - Gmail limits: consumer accounts can send ~100 emails/day via Apps Script – plenty for a

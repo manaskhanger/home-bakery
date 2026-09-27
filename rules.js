@@ -69,11 +69,14 @@
   function isValidEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(e || '').trim()); }
 
   // -------------------------------------------------------------- menu
+  /* Flavour choices for boxes: 'required' | 'optional' (blank = baker's choice) | 'none' (fixed contents) */
+  var BAKERS_CHOICE = "Baker's choice";
+  function pickOf(it) { return it.box ? (it.pick === 'optional' || it.pick === 'none' ? it.pick : 'required') : 'none'; }
   function indexMenu(menu) {
     var idx = {};
     menu.forEach(function (cat) {
       cat.items.forEach(function (it) {
-        idx[it.id] = { id: it.id, name: it.cartName || it.name, price: it.price, box: !!it.box, category: cat.id, fridayOk: !!cat.fridayOk };
+        idx[it.id] = { id: it.id, name: it.cartName || it.name, price: it.price, box: !!it.box, pick: pickOf(it), category: cat.id, fridayOk: !!cat.fridayOk };
       });
     });
     return idx;
@@ -88,8 +91,9 @@
       var qty = parseInt(raw && raw.qty, 10);
       if (!m) { errors.push('Unknown item: ' + (raw && raw.id)); return; }
       if (!(qty >= 1 && qty <= 50)) { errors.push('Invalid quantity for ' + m.name); return; }
-      var choices = m.box ? String(raw.choices || '').trim().slice(0, 200) : '';
-      if (m.box && !choices) errors.push('Please add flavour choices for your ' + m.name + '.');
+      var choices = m.pick !== 'none' ? String(raw.choices || '').trim().slice(0, 200) : '';
+      if (m.pick === 'required' && !choices) errors.push('Please add flavour choices for your ' + m.name + '.');
+      if (m.pick === 'optional' && !choices) choices = BAKERS_CHOICE;
       var lineTotal = m.price * qty;
       total += lineTotal;
       lines.push({ id: m.id, name: m.name, qty: qty, price: m.price, lineTotal: lineTotal, choices: choices, category: m.category, fridayOk: m.fridayOk });
@@ -106,12 +110,14 @@
   }
 
   // ---------------------------------------------------------- delivery
-  /* d = { freeWithinKm: 3, freeFromOrder: 800, perKm: 10, maxKm: 15 } */
+  /* d = { freeWithinKm: 3, freeFromOrder: 800, flatBeyond: 60 }
+     The free-delivery threshold uses the items subtotal BEFORE any discount. */
   function distanceOptions(d) {
-    var out = [{ value: String(d.freeWithinKm), label: 'Within ' + d.freeWithinKm + ' km' }];
-    for (var k = d.freeWithinKm + 1; k <= d.maxKm; k++) out.push({ value: String(k), label: k + ' km' });
-    out.push({ value: 'unknown', label: 'More than ' + d.maxKm + ' km / not sure' });
-    return out;
+    return [
+      { value: 'within', label: 'Within ' + d.freeWithinKm + ' km' },
+      { value: 'beyond', label: 'Beyond ' + d.freeWithinKm + ' km' },
+      { value: 'unknown', label: 'Not sure' }
+    ];
   }
   function distanceLabel(value, d) {
     var o = distanceOptions(d).filter(function (x) { return x.value === String(value); })[0];
@@ -124,15 +130,22 @@
     var bigOrder = subtotal >= d.freeFromOrder;
     var gap = Math.max(0, d.freeFromOrder - subtotal);
     if (!valid) return { valid: false, fee: null, tbc: true, free: false, reason: '', addForFree: bigOrder ? 0 : gap };
-    if (distance === 'unknown') {
-      if (bigOrder) return { valid: true, fee: 0, tbc: false, free: true, reason: 'order', addForFree: 0 };
-      return { valid: true, fee: null, tbc: true, free: false, reason: 'unknown', addForFree: gap };
-    }
-    var km = parseInt(distance, 10);
-    if (km <= d.freeWithinKm) return { valid: true, fee: 0, tbc: false, free: true, reason: 'nearby', addForFree: 0 };
+    if (distance === 'within') return { valid: true, fee: 0, tbc: false, free: true, reason: 'nearby', addForFree: 0 };
     if (bigOrder) return { valid: true, fee: 0, tbc: false, free: true, reason: 'order', addForFree: 0 };
-    return { valid: true, fee: (km - d.freeWithinKm) * d.perKm, tbc: false, free: false, reason: 'distance', addForFree: gap };
+    if (distance === 'unknown') return { valid: true, fee: null, tbc: true, free: false, reason: 'unknown', addForFree: gap };
+    return { valid: true, fee: d.flatBeyond, tbc: false, free: false, reason: 'distance', addForFree: gap };
   }
+
+  // ------------------------------------------------------ launch offer
+  /* The discount an order WOULD get if it is the customer's first order. */
+  function offerAmount(subtotal, offer) {
+    return offer && offer.amount > 0 && subtotal >= offer.minSubtotal ? offer.amount : 0;
+  }
+  /* Is there an earlier (non-declined) order from this phone? orders = [{phone, status}] */
+  function hasPriorOrder(orders, phone) {
+    return (orders || []).some(function (o) { return normalizePhone(o.phone) === phone && o.status !== 'Declined'; });
+  }
+  function orderTotal(subtotal, discount, fee) { return Number(subtotal) - (Number(discount) || 0) + (Number(fee) || 0); }
   function feeText(order, currency) {
     currency = currency || '₹';
     if (order.deliveryFeeTbc || order.deliveryFee == null) return 'To be confirmed';
@@ -142,8 +155,10 @@
   // ------------------------------------------- shared order operations
   /* Validates a createOrder payload. Returns { ok:false, error, errors } or
      { ok:true, fields } (everything except orderId / timestamps). */
-  function validateOrder(o, cfg, nowMs) {
-    o = o || {};
+  /* opts.hasPriorOrder(phone) -> true if this phone already has a (non-declined)
+     order; used for the first-order launch offer. */
+  function validateOrder(o, cfg, nowMs, opts) {
+    o = o || {}; opts = opts || {};
     var errors = [];
     if (o.website) return { ok: false, error: 'Spam check failed.', errors: ['Spam check failed.'] }; // honeypot
     var name = String(o.name || '').trim().slice(0, 80);
@@ -165,16 +180,18 @@
       : 'Please pick an available Saturday or Sunday (order by Thursday ' + formatHour(cfg.cutoffHour == null ? 15 : cfg.cutoffHour) + '; Friday evening is for cake toast only).');
     if (d && slotsFor(d.kind, cfg).indexOf(o.slot) === -1) errors.push('Please pick a delivery slot.');
     var fee = deliveryFee(priced.total, o.distance, cfg.delivery);
-    if (!fee.valid) errors.push('Please choose your approximate distance from us.');
+    if (!fee.valid) errors.push('Please choose within or beyond ' + cfg.delivery.freeWithinKm + ' km (or not sure).');
     if (errors.length) return { ok: false, error: errors[0], errors: errors };
     var lines = priced.lines.map(function (l) { return { id: l.id, name: l.name, qty: l.qty, price: l.price, lineTotal: l.lineTotal, choices: l.choices }; });
+    var potential = offerAmount(priced.total, cfg.launchOffer);
+    var discount = potential && !(opts.hasPriorOrder && opts.hasPriorOrder(phone)) ? potential : 0;
     return { ok: true, fields: {
       name: name, phone: phone, email: email, address: address, notes: notes,
       deliveryDate: o.deliveryDate, deliveryKind: d.kind, slot: o.slot,
       items: lines, summary: summarize(lines),
       distance: String(o.distance), distanceLabel: distanceLabel(o.distance, cfg.delivery),
-      subtotal: priced.total, deliveryFee: fee.fee, deliveryFeeTbc: fee.tbc,
-      total: priced.total + (fee.fee || 0)
+      subtotal: priced.total, discount: discount, deliveryFee: fee.fee, deliveryFeeTbc: fee.tbc,
+      total: orderTotal(priced.total, discount, fee.fee)
     } };
   }
 
@@ -196,7 +213,7 @@
     if (fee !== undefined) {
       feeChanged = fee !== order.deliveryFee || !!order.deliveryFeeTbc;
       order.deliveryFee = fee; order.deliveryFeeTbc = false;
-      order.total = Number(order.subtotal) + fee;
+      order.total = orderTotal(order.subtotal, order.discount, fee);
     }
     order.status = p.status;
     if (typeof p.note === 'string') order.adminNote = p.note.trim().slice(0, 500);
@@ -205,7 +222,7 @@
 
   function publicStatus(o) {
     return { orderId: o.orderId, firstName: String(o.name).split(' ')[0], status: o.status, deliveryDate: o.deliveryDate, slot: o.slot,
-      summary: o.summary, items: o.items, subtotal: o.subtotal, distanceLabel: o.distanceLabel, deliveryFee: o.deliveryFee,
+      summary: o.summary, items: o.items, subtotal: o.subtotal, discount: Number(o.discount) || 0, distanceLabel: o.distanceLabel, deliveryFee: o.deliveryFee,
       deliveryFeeTbc: !!o.deliveryFeeTbc, total: o.total, adminNote: o.adminNote, createdAt: o.createdAt, updatedAt: o.updatedAt };
   }
 
@@ -223,9 +240,9 @@
       intro = 'Hi ' + o.name + ", we're really sorry — we can't take your order this time.";
     }
     var note = o.adminNote && kind !== 'received' ? 'Note from us: ' + o.adminNote : '';
-    var feeLine = 'Delivery (' + o.distanceLabel + '): ' + feeText(o) + (kind === 'received' && !o.deliveryFeeTbc && o.deliveryFee > 0 ? ' (estimate — we confirm it with your order)' : '');
+    var feeLine = 'Delivery (' + o.distanceLabel + '): ' + feeText(o) + (kind === 'received' && !o.deliveryFeeTbc && o.deliveryFee > 0 ? ' (for the distance you picked — we confirm it with your order)' : '');
     var body = [intro].concat(note ? [note] : [], ['', 'Order ID: ' + o.orderId, 'Delivery: ' + when, 'Address: ' + o.address, '',
-      o.summary, '', 'Subtotal: ₹' + o.subtotal, feeLine, 'Total: ₹' + o.total + (o.deliveryFeeTbc ? ' + delivery' : ''), '', '— ' + cfg.bakeryName]).join('\n');
+      o.summary, '', 'Subtotal: ₹' + o.subtotal].concat(Number(o.discount) > 0 ? ['Launch offer (first order): −₹' + o.discount] : [], [feeLine, 'Total: ₹' + o.total + (o.deliveryFeeTbc ? ' + delivery' : ''), '', '— ' + cfg.bakeryName])).join('\n');
     return { to: o.email, subject: subject, body: body };
   }
 
@@ -234,7 +251,7 @@
     formatDate: formatDate, formatHour: formatHour, availableDates: availableDates, slotsFor: slotsFor,
     normalizePhone: normalizePhone, isValidEmail: isValidEmail, indexMenu: indexMenu, priceItems: priceItems,
     summarize: summarize, distanceOptions: distanceOptions, distanceLabel: distanceLabel, deliveryFee: deliveryFee,
-    feeText: feeText, validateOrder: validateOrder, parseFee: parseFee, applyAdminUpdate: applyAdminUpdate,
+    feeText: feeText, offerAmount: offerAmount, hasPriorOrder: hasPriorOrder, orderTotal: orderTotal, BAKERS_CHOICE: BAKERS_CHOICE, validateOrder: validateOrder, parseFee: parseFee, applyAdminUpdate: applyAdminUpdate,
     publicStatus: publicStatus, buildEmail: buildEmail
   };
 });

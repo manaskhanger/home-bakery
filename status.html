@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#3b2019">
-  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#1d332d">
   <link rel="icon" href="images/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="images/favicon-48.png" sizes="48x48" type="image/png">
   <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=2">
-  <title>Track your order · Your Bakery Name</title>
+  <link rel="stylesheet" href="styles.css?v=3">
+  <title>Track your order · La Pâte Brillante</title>
 </head>
 <body data-page="status" class="page-soft">
   <header class="site-header">
     <div class="wrap header-inner">
-      <a href="index.html" class="brand"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></a>
+      <a href="index.html" class="brand"><img class="brand-logo" src="images/logo-160.png" alt="" width="44" height="44"><span data-cfg="bakeryName">La Pâte Brillante</span></a>
       <nav class="nav nav-always" aria-label="Main">
         <a href="index.html#menu">Menu</a>
         <a href="status.html" aria-current="page">Track order</a>
@@ -51,7 +51,7 @@
       <div class="footer-card">
         <div class="footer-grid">
           <div class="f-brand">
-            <p class="f-name"><span class="brand-mark" aria-hidden="true">🧁</span><span data-cfg="bakeryName">Your Bakery Name</span></p>
+            <p class="f-name"><img class="brand-logo" src="images/logo-160.png" alt="" width="44" height="44"><span data-cfg="bakeryName">La Pâte Brillante</span></p>
             <p class="f-tag" data-cfg="headline">A little luxury, every weekend.</p>
             <a class="btn btn-cream btn-small" data-wa-link href="#" target="_blank" rel="noopener">Chat on WhatsApp</a>
           </div>
@@ -61,30 +61,32 @@
               <li>Order by Thursday, 3 pm</li>
               <li>Delivered Sat &amp; Sun · Friday evening for cake toast</li>
               <li>Minimum order <span data-cfg-money="minOrder">₹250</span></li>
-              <li>Free delivery up to <span data-dl="freeWithinKm">3</span> km, or on orders of <span data-dl-money="freeFromOrder">₹800</span>+</li>
-              <li>Otherwise <span data-dl-money="perKm">₹10</span>/km past <span data-dl="freeWithinKm">3</span> km</li>
+              <li>Free delivery up to <span data-dl="freeWithinKm">3</span> km · beyond, free on orders of <span data-dl-money="freeFromOrder">₹800</span>+</li>
+              <li>Beyond <span data-dl="freeWithinKm">3</span> km on orders under <span data-dl-money="freeFromOrder">₹800</span>: <span data-dl-money="flatBeyond">₹60</span></li>
+              <li data-offer-only>New customers: <span data-offer-money="amount">₹50</span> off your first order of <span data-offer-money="minSubtotal">₹500</span>+</li>
             </ul>
           </div>
           <div>
             <h4>Say hello</h4>
             <ul class="f-list">
-              <li><a data-wa-link href="#" target="_blank" rel="noopener">WhatsApp <span data-cfg="whatsappDisplay">+91 [YOUR NUMBER]</span></a></li>
-              <li><a data-ig-link href="#" target="_blank" rel="noopener">Instagram @<span data-cfg="instagramHandle">yourhandle</span></a></li>
+              <li><a data-wa-link href="https://wa.me/919599909742" target="_blank" rel="noopener">WhatsApp <span data-cfg="whatsappDisplay">+91 95999 09742</span></a></li>
+              <li data-ig-item hidden><a data-ig-link href="#" target="_blank" rel="noopener">Instagram</a></li>
               <li><a href="status.html">Track your order</a></li>
               <li><a href="index.html#menu">See the menu</a></li>
             </ul>
           </div>
         </div>
       </div>
+      <p class="f-order"><small>Order on WhatsApp</small><a data-wa-link href="https://wa.me/919599909742" target="_blank" rel="noopener" data-cfg="whatsappDisplay">+91 95999 09742</a></p>
       <p class="f-thanks">Thank you for supporting small business!</p>
-      <p class="copyright">© <span data-year></span> <span data-cfg="bakeryName">Your Bakery Name</span> · FSSAI Reg. No. <span data-cfg="fssaiNumber">[YOUR NUMBER]</span> · <a href="credits.html">Photo credits</a></p>
+      <p class="copyright">© <span data-year></span> <span data-cfg="bakeryName">La Pâte Brillante</span><span data-fssai></span> · <a href="credits.html">Photo credits</a></p>
     </div>
   </footer>
 
   <div class="toast" data-toast role="status" aria-live="polite"></div>
-  <script src="config.js?v=2"></script>
-  <script src="rules.js?v=2"></script>
-  <script src="demo-backend.js?v=2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="rules.js?v=3"></script>
+  <script src="demo-backend.js?v=3"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>

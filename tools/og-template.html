@@ -1,21 +1,25 @@
 <!doctype html><html><head><meta charset="utf-8">
+<!-- Renders images/og-image.jpg (1200x630). Regenerate: node tools/icons.js (or screenshot this page at 1200x630). -->
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..800;1,9..144,400..800&family=Karla:wght@400;700&display=swap" rel="stylesheet">
 <style>
-body{margin:0;width:1200px;height:630px;background:#3b2019;color:#fbf3ea;font-family:Karla,sans-serif;position:relative;overflow:hidden}
-.c{position:absolute;left:80px;top:150px;width:640px}
-.e{font-size:18px;letter-spacing:.3em;text-transform:uppercase;color:#eed9c9;font-weight:700}
-h1{font-family:Fraunces,serif;font-weight:700;font-size:92px;line-height:1;margin:22px 0 18px;letter-spacing:-.02em}
-.t{font-family:Fraunces,serif;font-style:italic;font-size:32px;color:#f2cdbf}
-.r{margin-top:34px;font-size:20px;color:#d9c2b5}
-img{position:absolute;right:90px;top:60px;width:360px;height:510px;object-fit:cover;border-radius:999px 999px 30px 30px;box-shadow:0 0 0 10px rgba(251,243,234,.08)}
-i{position:absolute;width:22px;height:7px;border-radius:6px}
-.s{position:absolute;left:0;right:0;bottom:-18px;height:20px;background:radial-gradient(circle at 20px 20px,#fbf3ea 19.5px,transparent 20px) repeat-x;background-size:40px 20px}
+body{margin:0;width:1200px;height:630px;background:#1d332d;color:#f8f4ec;font-family:Karla,sans-serif;position:relative;overflow:hidden}
+.frame{position:absolute;inset:22px;border:1.5px solid rgba(176,138,74,.7);border-radius:6px}
+.logo{position:absolute;left:92px;top:125px;width:380px;height:380px;border-radius:50%;box-shadow:0 0 0 10px rgba(176,138,74,.12),0 30px 60px -20px rgba(0,0,0,.6)}
+.c{position:absolute;left:540px;top:150px;width:590px}
+.e{font-size:17px;letter-spacing:.3em;text-transform:uppercase;color:#d8bd86;font-weight:700}
+h1{font-family:Fraunces,serif;font-weight:600;font-size:76px;line-height:1.02;margin:22px 0 18px;letter-spacing:-.015em;color:#fffaf0}
+.t{font-family:Fraunces,serif;font-style:italic;font-size:34px;color:#e6cf9f}
+.s{margin-top:12px;font-size:20px;color:#c9cfc6}
+.rule{display:flex;align-items:center;gap:14px;margin:26px 0 20px;color:#b08a4a}
+.rule span{height:1px;width:120px;background:#b08a4a}
+.rule b{width:9px;height:9px;border:1.5px solid #b08a4a;transform:rotate(45deg)}
+.r{font-size:20px;line-height:1.5;color:#d9dccf}
 </style></head><body>
-<i style="left:60px;top:60px;background:#f4b6c2;transform:rotate(30deg)"></i><i style="left:300px;top:90px;background:#8fd3c1;transform:rotate(-40deg)"></i>
-<i style="left:640px;top:70px;background:#e89a4f;transform:rotate(60deg)"></i><i style="left:110px;top:585px;background:#d94f6d;transform:rotate(-20deg)"></i>
-<i style="left:560px;top:540px;background:#f3dcae;transform:rotate(15deg)"></i><i style="left:720px;top:420px;background:#f4b6c2;transform:rotate(-65deg)"></i>
-<div class="c"><div class="e">Weekend bakes · Made to order</div><h1 id="n">Your Bakery Name</h1><div class="t" id="t">A little luxury, every weekend.</div>
-<div class="r">Cookies · Cupcakes · Cake toast — order by Thursday, 3 pm</div></div>
-<img src="../images/hero.jpg">
-<script src="../config.js"></script><script>document.getElementById('n').textContent=BAKERY_CONFIG.bakeryName;document.getElementById('t').textContent=BAKERY_CONFIG.headline;</script>
+<div class="frame"></div>
+<img class="logo" src="../images/logo.png" alt="">
+<div class="c"><div class="e">Weekend bakes · Made to order</div><h1 id="n">La Pâte Brillante</h1><div class="t" id="t">A little luxury, every weekend.</div>
+<div class="s" id="s">Small batches, baked fresh in a home kitchen</div>
+<div class="rule"><span></span><b></b><span></span></div>
+<div class="r">Cookies · Cupcakes · Cake toast · Gift boxes<br>Order by Thursday, 3 pm for weekend delivery</div></div>
+<script src="../config.js"></script><script>var C=window.BAKERY_CONFIG;document.getElementById('n').textContent=C.bakeryName;document.getElementById('t').textContent=C.headline;document.getElementById('s').textContent=C.tagline;</script>
 </body></html>
